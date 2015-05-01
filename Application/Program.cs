@@ -8,7 +8,7 @@ namespace Application
         {
             using (var context = new BlogContext())
             {
-                var result = context.ExectuteQuery<Post>("select * from Post2");
+                var result = context.ExectuteQuery<Comment>("select * from Post");
             }
         }
     }
