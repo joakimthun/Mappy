@@ -1,4 +1,5 @@
 ﻿using Mappy;
+using System.Collections.Generic;
 
 namespace Application
 {
@@ -17,6 +18,7 @@ namespace Application
     {
         public BlogContext() : base("Default")
         {
+            Configure<Post>(x => x.HasPrimaryKey(e => e.Id));
         }
     }
 
@@ -24,6 +26,7 @@ namespace Application
     {
         public int Id { get; set; }
         public string Text { get; set; }
+        public ICollection<Comment> Comments { get; set; }
     }
 
     class Comment

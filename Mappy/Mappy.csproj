@@ -41,8 +41,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Configuration\IMappyConfigurator.cs" />
+    <Compile Include="Configuration\MappyConfigurator.cs" />
     <Compile Include="DbContext.cs" />
     <Compile Include="Exceptions\MappyException.cs" />
+    <Compile Include="Helpers\ExpressionHelper.cs" />
     <Compile Include="Mapping\EntityFactory.cs" />
     <Compile Include="Mapping\EntityMapper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
