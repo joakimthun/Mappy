@@ -19,6 +19,7 @@ namespace Application
         public BlogContext() : base("Default")
         {
             Configure<Post>(x => x.HasPrimaryKey(e => e.Id));
+            Configure<Post>(x => x.HasMany(e => e.Comments).HasForeignKey(c => c.PostId));
         }
     }
 

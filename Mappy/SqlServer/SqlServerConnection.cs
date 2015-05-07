@@ -7,7 +7,7 @@ using System.Text;
 
 namespace Mappy.SqlServer
 {
-    internal class SqlServerConnection : IDisposable
+    internal class SqlServerConnection : IDatabaseConnection, IDisposable
     {
         private readonly SqlConnection _connection;
 
@@ -28,6 +28,13 @@ namespace Mappy.SqlServer
             OpenConnectionIfNotOpen();
 
             return _connection.GetSchema("Tables");
+        }
+
+        public DataTable GetSchema()
+        {
+            OpenConnectionIfNotOpen();
+
+            return _connection.GetSchema();
         }
 
         public void Dispose()

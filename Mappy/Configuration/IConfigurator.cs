@@ -4,7 +4,7 @@ using System.Linq.Expressions;
 
 namespace Mappy.Configuration
 {
-    public interface IMappyConfigurator
+    public interface IConfigurator
     {
         Type EntityType { get; }
     }
