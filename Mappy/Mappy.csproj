@@ -43,15 +43,20 @@
   <ItemGroup>
     <Compile Include="Configuration\MappyConfiguration.cs" />
     <Compile Include="Configuration\HasMany.cs" />
-    <Compile Include="Configuration\IMappyConfiguration.cs" />
     <Compile Include="Configuration\IConfigurator.cs" />
     <Compile Include="Configuration\ForeignKeyConfigurator.cs" />
     <Compile Include="Configuration\Configurator.cs" />
+    <Compile Include="Configuration\SupportedType.cs" />
+    <Compile Include="Configuration\SupportedTypes.cs" />
+    <Compile Include="Extensions\PropertyInfoExtensions.cs" />
     <Compile Include="IDatabaseConnection.cs" />
+    <Compile Include="Queries\SqlQuery.cs" />
+    <Compile Include="Reflection\PropertyHelper.cs" />
     <Compile Include="Schema\Column.cs" />
     <Compile Include="Schema\Constraint.cs" />
     <Compile Include="Schema\ForeignKey.cs" />
     <Compile Include="Schema\PrimaryKey.cs" />
+    <Compile Include="Schema\DatabaseSchema.cs" />
     <Compile Include="Schema\Table.cs" />
     <Compile Include="Configuration\ISchemaAnalyzer.cs" />
     <Compile Include="SqlServer\SqlServerSchemaAnalyzer.cs" />

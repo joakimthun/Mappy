@@ -1,7 +1,9 @@
-﻿namespace Mappy.Configuration
+﻿using Mappy.Schema;
+
+namespace Mappy.Configuration
 {
     internal interface ISchemaAnalyzer
     {
-        IMappyConfiguration GetConfigurator();
+        DatabaseSchema GetSchema();
     }
 }

@@ -1,7 +1,15 @@
-﻿namespace Mappy.Schema
+﻿using System.Data.SqlClient;
+
+namespace Mappy.Schema
 {
+    internal enum ConstraintType
+    {
+        PrimaryKey,
+        ForeignKey
+    }
+
     internal abstract class Constraint
     {
-        public Column Column { get; set; }
+        public abstract ConstraintType ConstraintType { get; }
     }
 }

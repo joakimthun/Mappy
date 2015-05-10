@@ -1,24 +1,31 @@
 ﻿using Mappy.Configuration;
 using Mappy.Mapping;
+using Mappy.Queries;
 using Mappy.SqlServer;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
 
 namespace Mappy
 {
     public class DbContext : IDisposable
     {
         private readonly IDatabaseConnection _connection;
+        private readonly MappyConfiguration _configuration;
         private readonly EntityMapper _entityMapper;
         private readonly List<IConfigurator> _configurators;
 
         public DbContext(string connectionString)
         {
             _connection = new SqlServerConnection(connectionString);
-            _entityMapper = new EntityMapper(_connection.GetTables());
+            _configuration = new MappyConfiguration(connectionString);
+            _entityMapper = new EntityMapper(_configuration);
             _configurators = new List<IConfigurator>();
+        }
+
+        public IEnumerable<TEntity> Tables<TEntity>(SqlQuery<TEntity> query = null) where TEntity : new()
+        {
+            return TablesImpl(query);
         }
 
         public IEnumerable<TEntity> ExectuteQuery<TEntity>(string query) where TEntity : new()
@@ -47,6 +54,22 @@ namespace Mappy
         public void Dispose()
         {
             _connection.Dispose();
+        }
+
+        private IEnumerable<TEntity> TablesImpl<TEntity>(SqlQuery<TEntity> query) where TEntity : new()
+        {
+            if (query == null)
+                query = new SqlQuery<TEntity>();
+
+            query.Configuration = _configuration;
+
+            var compiledQuery = query.Compile();
+
+            using (var command = _connection.GetCommand(compiledQuery))
+            using (var reader = command.ExecuteReader())
+            {
+                return _entityMapper.Map<TEntity>(reader);
+            }
         }
     }
 }

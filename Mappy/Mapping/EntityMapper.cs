@@ -1,19 +1,19 @@
-﻿using Mappy.Exceptions;
+﻿using Mappy.Configuration;
+using Mappy.Exceptions;
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Data.SqlClient;
 
 namespace Mappy.Mapping
 {
     internal class EntityMapper
     {
-        private readonly DataTable _tables;
+        private readonly MappyConfiguration _configuration;
         private readonly EntityFactory _entityFactory;
 
-        public EntityMapper(DataTable tables)
+        public EntityMapper(MappyConfiguration configuration)
         {
-            _tables = tables;
+            _configuration = configuration;
             _entityFactory = new EntityFactory();
         }
 
@@ -28,9 +28,9 @@ namespace Mappy.Mapping
 
         private bool ContainsTable(Type entityType)
         {
-            foreach (DataRow row in _tables.Rows)
+            foreach (var table in _configuration.Schema.Tables)
             {
-                if ((string)row[2] == entityType.Name)
+                if (table.Name == entityType.Name)
                 {
                     return true;
                 }

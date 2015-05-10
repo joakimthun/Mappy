@@ -1,21 +1,29 @@
-﻿using Mappy.SqlServer;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Mappy.Schema;
+using Mappy.SqlServer;
 
 namespace Mappy.Configuration
 {
-    internal class MappyConfiguration : IMappyConfiguration
+    internal class MappyConfiguration
     {
         private IDatabaseConnection _connection;
         private ISchemaAnalyzer _schemaAnalyzer;
+        private DatabaseSchema _schema;
 
         public MappyConfiguration(string connectionString)
         {
-            _connection = new SqlServerConnection("");
-            _schemaAnalyzer = new SqlServerSchemaAnalyzer();
+            _connection = new SqlServerConnection(connectionString);
+            _schemaAnalyzer = new SqlServerSchemaAnalyzer(_connection);
+        }
+
+        public DatabaseSchema Schema
+        {
+            get
+            {
+                if(_schema == null)
+                    _schema = _schemaAnalyzer.GetSchema();
+
+                return _schema;
+            }
         }
     }
 }

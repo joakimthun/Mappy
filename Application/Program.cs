@@ -1,4 +1,6 @@
 ﻿using Mappy;
+using Mappy.Queries;
+using System;
 using System.Collections.Generic;
 
 namespace Application
@@ -9,7 +11,7 @@ namespace Application
         {
             using (var context = new BlogContext())
             {
-                var result = context.ExectuteQuery<Comment>("select * from Post");
+                var result = context.Tables<Post>();
             }
         }
     }
@@ -27,6 +29,8 @@ namespace Application
     {
         public int Id { get; set; }
         public string Text { get; set; }
+        public DateTime? CreatedDate { get; set; }
+        public bool Published { get; set; }
         public ICollection<Comment> Comments { get; set; }
     }
 
@@ -34,6 +38,8 @@ namespace Application
     {
         public int Id { get; set; }
         public string Text { get; set; }
+        public DateTime? CreatedDate { get; set; }
+        public bool Published { get; set; }
         public int PostId { get; set; }
     }
 }
