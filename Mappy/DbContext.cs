@@ -23,9 +23,9 @@ namespace Mappy
             _configurators = new List<IConfigurator>();
         }
 
-        public IEnumerable<TEntity> Tables<TEntity>(SqlQuery<TEntity> query = null) where TEntity : new()
+        public IEnumerable<TEntity> Repository<TEntity>(SqlQuery<TEntity> query = null) where TEntity : new()
         {
-            return TablesImpl(query);
+            return RepositoryImpl(query);
         }
 
         public IEnumerable<TEntity> ExectuteQuery<TEntity>(string query) where TEntity : new()
@@ -56,7 +56,7 @@ namespace Mappy
             _connection.Dispose();
         }
 
-        private IEnumerable<TEntity> TablesImpl<TEntity>(SqlQuery<TEntity> query) where TEntity : new()
+        private IEnumerable<TEntity> RepositoryImpl<TEntity>(SqlQuery<TEntity> query) where TEntity : new()
         {
             if (query == null)
                 query = new SqlQuery<TEntity>();

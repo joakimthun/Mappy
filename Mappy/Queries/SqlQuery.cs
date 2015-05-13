@@ -1,4 +1,5 @@
 ﻿using Mappy.Configuration;
+using Mappy.Extensions;
 using Mappy.Helpers;
 using Mappy.Reflection;
 using Mappy.Schema;
@@ -12,25 +13,30 @@ namespace Mappy.Queries
 {
     public class SqlQuery<TEntity> where TEntity : new()
     {
-        private const string TableAliasTemplate = "Table{0}";
         private const string ColumnNameTemplate = "[{0}]";
 
         private MappyConfiguration _configuration;
         private List<string> _columns;
-        private List<string> _includes;
-        private int _aliasCounter;
+        private List<Include> _includes;
         private Table _table;
+        private QueryHelper _helper;
 
         public SqlQuery()
         {
             SetColumns();
-            _includes = new List<string>();
-            _aliasCounter = 1;
+            _includes = new List<Include>();
+            _helper = new QueryHelper();
         }
 
         public SqlQuery<TEntity> Include<TProperty>(Expression<Func<TEntity, TProperty>> expression)
         {
-            _includes.Add(ExpressionHelper.GetPropertyName(expression));
+            var properyInfo = ExpressionHelper.GetPropertyInfo(expression);
+
+            _includes.Add(new Include
+            {
+                UnderlyingPropertyType = properyInfo.GetUnderlyingPropertyType(),
+                PropertyName = properyInfo.Name
+            });
 
             return this;
         }
@@ -41,9 +47,11 @@ namespace Mappy.Queries
 
             var sb = new StringBuilder();
 
+            var fromSegment = new FromSegment<TEntity>(_configuration, _helper, _includes);
+
             AddSelectStatement(sb);
             AddIncludedColumns(sb);
-            AddFromStatement(sb);
+            fromSegment.Compile(sb);
 
             return sb.ToString();
         }
@@ -61,16 +69,6 @@ namespace Mappy.Queries
         private void AddIncludedColumns(StringBuilder sb)
         {
             sb.Append(string.Join(", ", _columns));
-        }
-
-        private void AddFromStatement(StringBuilder sb)
-        {
-            sb.Append(string.Format(" FROM {0} AS {1}", _table.Name, GetNextTableAlias()));
-        }
-
-        private string GetNextTableAlias()
-        {
-            return string.Format(TableAliasTemplate, _aliasCounter++);
         }
 
         private void SetColumns()

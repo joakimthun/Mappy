@@ -11,8 +11,16 @@ namespace Application
         {
             using (var context = new BlogContext())
             {
-                var result = context.Tables<Post>();
+                var query = new SqlQuery<Post>().Include(x => x.Comments);
+                var result = context.Repository<Post>(query);
+
+                foreach (var post in result)
+                {
+                    Console.WriteLine("{0} {1} {2} {3}", post.Id, post.Text, post.CreatedDate, post.Published);
+                }
             }
+
+            Console.ReadKey();
         }
     }
 
@@ -20,8 +28,8 @@ namespace Application
     {
         public BlogContext() : base("Default")
         {
-            Configure<Post>(x => x.HasPrimaryKey(e => e.Id));
-            Configure<Post>(x => x.HasMany(e => e.Comments).HasForeignKey(c => c.PostId));
+            //Configure<Post>(x => x.HasPrimaryKey(e => e.Id));
+            //Configure<Post>(x => x.HasMany(e => e.Comments).HasForeignKey(c => c.PostId));
         }
     }
 
