@@ -13,7 +13,7 @@ namespace Mappy.Queries
 {
     public class SqlQuery<TEntity> where TEntity : new()
     {
-        private const string ColumnNameTemplate = "[{0}]";
+        private const string ColumnNameTemplate = "{0}.[{1}]";
 
         private MappyConfiguration _configuration;
         private List<string> _columns;
@@ -23,9 +23,10 @@ namespace Mappy.Queries
 
         public SqlQuery()
         {
-            SetColumns();
             _includes = new List<Include>();
             _helper = new QueryHelper();
+
+            SetColumns();
         }
 
         public SqlQuery<TEntity> Include<TProperty>(Expression<Func<TEntity, TProperty>> expression)
@@ -35,7 +36,8 @@ namespace Mappy.Queries
             _includes.Add(new Include
             {
                 UnderlyingPropertyType = properyInfo.GetUnderlyingPropertyType(),
-                PropertyName = properyInfo.Name
+                PropertyName = properyInfo.Name,
+                IsCollection = properyInfo.IsICollection()
             });
 
             return this;
@@ -79,7 +81,7 @@ namespace Mappy.Queries
             foreach (var property in properties)
             {
                 if(SupportedTypes.Contains(property.PropertyType))
-                    _columns.Add(string.Format(ColumnNameTemplate, property.Name));
+                    _columns.Add(string.Format(ColumnNameTemplate, _helper.GetTableAlias(typeof(TEntity)), property.Name));
             }
         }
     }

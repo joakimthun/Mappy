@@ -6,31 +6,27 @@ namespace Mappy.Queries
     internal class QueryHelper
     {
         private Dictionary<Type, TableAlias> _tableAliases;
+        private int _aliasCounter;
 
         public QueryHelper()
         {
+            _aliasCounter = 1;
             _tableAliases = new Dictionary<Type, TableAlias>();
         }
 
-        public string GetNextTableAlias(Type type, int nestingLevel = 0)
+        public void GetNextTableAliasIfNotExists(Type type, int nestingLevel)
         {
-            TableAlias alias;
-
             if (!_tableAliases.ContainsKey(type))
             {
-                alias = new TableAlias(nestingLevel);
+                var alias = new TableAlias(ref _aliasCounter, nestingLevel);
                 _tableAliases.Add(type, alias);
             }
-            else
-            {
-                alias = _tableAliases[type];
-            }
-
-            return alias.Aliases[nestingLevel];
         }
 
         public string GetTableAlias(Type type, int nestingLevel = 0)
         {
+            GetNextTableAliasIfNotExists(type, nestingLevel);
+
             return _tableAliases[type].Aliases[nestingLevel];
         }
 
@@ -38,20 +34,17 @@ namespace Mappy.Queries
         {
             private const string TableAliasTemplate = "Table{0}";
 
-            private int _aliasCounter;
-
-            public TableAlias(int nestingLevel)
+            public TableAlias(ref int aliasCounter, int nestingLevel)
             {
                 Aliases = new Dictionary<int, string>();
-                Aliases.Add(nestingLevel, GetNextTableAlias());
-                _aliasCounter = 1;
+                Aliases.Add(nestingLevel, GetNextTableAlias(ref aliasCounter));
             }
 
             public Dictionary<int, string> Aliases { get; set; }
 
-            public string GetNextTableAlias()
+            public string GetNextTableAlias(ref int aliasCounter)
             {
-                return string.Format(TableAliasTemplate, _aliasCounter++);
+                return string.Format(TableAliasTemplate, aliasCounter++);
             }
         }
     }

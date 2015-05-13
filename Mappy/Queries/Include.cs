@@ -7,5 +7,7 @@ namespace Mappy.Queries
         public Type UnderlyingPropertyType { get; set; }
 
         public string PropertyName { get; set; }
+
+        public bool IsCollection { get; set; }
     }
 }
