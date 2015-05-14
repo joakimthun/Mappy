@@ -50,11 +50,13 @@
     <Compile Include="Configuration\SupportedTypes.cs" />
     <Compile Include="Extensions\PropertyInfoExtensions.cs" />
     <Compile Include="IDatabaseConnection.cs" />
+    <Compile Include="Queries\SelectSegment.cs" />
     <Compile Include="Queries\FromSegment.cs" />
     <Compile Include="Queries\Include.cs" />
     <Compile Include="Queries\QueryHelper.cs" />
     <Compile Include="Queries\QuerySegment.cs" />
     <Compile Include="Queries\SqlQuery.cs" />
+    <Compile Include="Queries\AliasHelper.cs" />
     <Compile Include="Reflection\PropertyHelper.cs" />
     <Compile Include="Schema\Column.cs" />
     <Compile Include="Schema\Constraint.cs" />

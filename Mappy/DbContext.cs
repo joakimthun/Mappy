@@ -12,29 +12,18 @@ namespace Mappy
     {
         private readonly IDatabaseConnection _connection;
         private readonly MappyConfiguration _configuration;
-        private readonly EntityMapper _entityMapper;
         private readonly List<IConfigurator> _configurators;
 
         public DbContext(string connectionString)
         {
             _connection = new SqlServerConnection(connectionString);
             _configuration = new MappyConfiguration(connectionString);
-            _entityMapper = new EntityMapper(_configuration);
             _configurators = new List<IConfigurator>();
         }
 
         public IEnumerable<TEntity> Repository<TEntity>(SqlQuery<TEntity> query = null) where TEntity : new()
         {
             return RepositoryImpl(query);
-        }
-
-        public IEnumerable<TEntity> ExectuteQuery<TEntity>(string query) where TEntity : new()
-        {
-            using(var command = _connection.GetCommand(query))
-            using(var reader = command.ExecuteReader())
-            {
-                return _entityMapper.Map<TEntity>(reader);
-            }
         }
 
         public void Configure<TEntity>(Action<Configurator<TEntity>> configurator) where TEntity : new()
@@ -65,10 +54,12 @@ namespace Mappy
 
             var compiledQuery = query.Compile();
 
+            var entityMapper = new EntityMapper(_configuration, query.AliasHelpers);
+
             using (var command = _connection.GetCommand(compiledQuery))
             using (var reader = command.ExecuteReader())
             {
-                return _entityMapper.Map<TEntity>(reader);
+                return entityMapper.Map<TEntity>(reader);
             }
         }
     }

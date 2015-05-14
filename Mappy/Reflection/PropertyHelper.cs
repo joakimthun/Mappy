@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
@@ -8,7 +9,12 @@ namespace Mappy.Reflection
     {
         public static IEnumerable<PropertyInfo> GetPublicInstanceProperties<T>()
         {
-            return typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance).ToList();
+            return GetPublicInstanceProperties(typeof(T));
+        }
+
+        public static IEnumerable<PropertyInfo> GetPublicInstanceProperties(Type type)
+        {
+            return type.GetProperties(BindingFlags.Public | BindingFlags.Instance).ToList();
         }
     }
 }

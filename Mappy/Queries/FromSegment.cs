@@ -1,5 +1,4 @@
 ﻿using Mappy.Configuration;
-using Mappy.Exceptions;
 using Mappy.Schema;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,8 +14,6 @@ namespace Mappy.Queries
 
         public override void Compile(StringBuilder sb)
         {
-            AssertIncludesAreValid();
-
             AddFromStatement(sb);
 
             if (_includes.Any())
@@ -41,19 +38,6 @@ namespace Mappy.Queries
                     GetFkColumn(include),
                     GetPkColumn(include)
                     ));
-            }
-        }
-
-        private void AssertIncludesAreValid()
-        {
-            var test = _configuration.Schema.Constraints.OfType<ForeignKey>().ToList();
-
-            foreach (var include in _includes)
-            {
-                if (!_configuration.Schema.Constraints.OfType<ForeignKey>().Any(fk => fk.FkTable.Name == include.UnderlyingPropertyType.Name && fk.PkTable.Name == _table.Name))
-                {
-                    throw new MappyException("The included property {0} does not have a valid foreign key to the table {1}", include, _table.Name);
-                }
             }
         }
 

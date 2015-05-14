@@ -1,50 +1,40 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Mappy.Queries
 {
     internal class QueryHelper
     {
-        private Dictionary<Type, TableAlias> _tableAliases;
         private int _aliasCounter;
 
         public QueryHelper()
         {
             _aliasCounter = 1;
-            _tableAliases = new Dictionary<Type, TableAlias>();
+            AliasHelpers = new List<AliasHelper>();
         }
 
-        public void GetNextTableAliasIfNotExists(Type type, int nestingLevel)
+        public List<AliasHelper> AliasHelpers { get; private set; }
+
+        public string GetTableAlias(Type type)
         {
-            if (!_tableAliases.ContainsKey(type))
-            {
-                var alias = new TableAlias(ref _aliasCounter, nestingLevel);
-                _tableAliases.Add(type, alias);
-            }
+            CreateNextTableAliasIfNotExists(type);
+
+            return AliasHelpers.SingleOrDefault(x => x.EntityType == type).TableAlias;
         }
 
-        public string GetTableAlias(Type type, int nestingLevel = 0)
+        public string GetColumnAlias(Type type, string propertyName)
         {
-            GetNextTableAliasIfNotExists(type, nestingLevel);
-
-            return _tableAliases[type].Aliases[nestingLevel];
+            return AliasHelpers.SingleOrDefault(x => x.EntityType == type).GetColumnAlias(propertyName);
         }
 
-        private class TableAlias
+        private void CreateNextTableAliasIfNotExists(Type type)
         {
-            private const string TableAliasTemplate = "Table{0}";
+            var aliasHelper = AliasHelpers.SingleOrDefault(x => x.EntityType == type);
 
-            public TableAlias(ref int aliasCounter, int nestingLevel)
+            if (aliasHelper == null)
             {
-                Aliases = new Dictionary<int, string>();
-                Aliases.Add(nestingLevel, GetNextTableAlias(ref aliasCounter));
-            }
-
-            public Dictionary<int, string> Aliases { get; set; }
-
-            public string GetNextTableAlias(ref int aliasCounter)
-            {
-                return string.Format(TableAliasTemplate, aliasCounter++);
+                AliasHelpers.Add(new AliasHelper(type, ref _aliasCounter));
             }
         }
     }

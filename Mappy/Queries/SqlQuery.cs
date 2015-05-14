@@ -1,7 +1,7 @@
 ﻿using Mappy.Configuration;
+using Mappy.Exceptions;
 using Mappy.Extensions;
 using Mappy.Helpers;
-using Mappy.Reflection;
 using Mappy.Schema;
 using System;
 using System.Collections.Generic;
@@ -13,10 +13,7 @@ namespace Mappy.Queries
 {
     public class SqlQuery<TEntity> where TEntity : new()
     {
-        private const string ColumnNameTemplate = "{0}.[{1}]";
-
         private MappyConfiguration _configuration;
-        private List<string> _columns;
         private List<Include> _includes;
         private Table _table;
         private QueryHelper _helper;
@@ -25,8 +22,6 @@ namespace Mappy.Queries
         {
             _includes = new List<Include>();
             _helper = new QueryHelper();
-
-            SetColumns();
         }
 
         public SqlQuery<TEntity> Include<TProperty>(Expression<Func<TEntity, TProperty>> expression)
@@ -47,12 +42,14 @@ namespace Mappy.Queries
         {
             _table = _configuration.Schema.Tables.Single(t => t.Name == typeof(TEntity).Name);
 
-            var sb = new StringBuilder();
+            AssertIncludesAreValid();
 
+            var selectSegment = new SelectSegment<TEntity>(_configuration, _helper, _includes);
             var fromSegment = new FromSegment<TEntity>(_configuration, _helper, _includes);
 
-            AddSelectStatement(sb);
-            AddIncludedColumns(sb);
+            var sb = new StringBuilder();
+
+            selectSegment.Compile(sb);
             fromSegment.Compile(sb);
 
             return sb.ToString();
@@ -63,25 +60,21 @@ namespace Mappy.Queries
             set { _configuration = value; }
         }
 
-        private void AddSelectStatement(StringBuilder sb)
+        internal List<AliasHelper> AliasHelpers
         {
-            sb.Append("SELECT ");
+            get { return _helper.AliasHelpers; }
         }
 
-        private void AddIncludedColumns(StringBuilder sb)
+        private void AssertIncludesAreValid()
         {
-            sb.Append(string.Join(", ", _columns));
-        }
+            var test = _configuration.Schema.Constraints.OfType<ForeignKey>().ToList();
 
-        private void SetColumns()
-        {
-            _columns = new List<string>();
-            var properties = PropertyHelper.GetPublicInstanceProperties<TEntity>();
-
-            foreach (var property in properties)
+            foreach (var include in _includes)
             {
-                if(SupportedTypes.Contains(property.PropertyType))
-                    _columns.Add(string.Format(ColumnNameTemplate, _helper.GetTableAlias(typeof(TEntity)), property.Name));
+                if (!_configuration.Schema.Constraints.OfType<ForeignKey>().Any(fk => fk.FkTable.Name == include.UnderlyingPropertyType.Name && fk.PkTable.Name == _table.Name))
+                {
+                    throw new MappyException("The included property {0} does not have a valid foreign key to the table {1}", include, _table.Name);
+                }
             }
         }
     }
