@@ -33,7 +33,7 @@ namespace Application
         }
     }
 
-    class Post
+    class Post : IMappyEntity
     {
         public int Id { get; set; }
         public string Text { get; set; }
@@ -42,7 +42,7 @@ namespace Application
         public ICollection<Comment> Comments { get; set; }
     }
 
-    class Comment
+    class Comment : IMappyEntity
     {
         public int Id { get; set; }
         public string Text { get; set; }

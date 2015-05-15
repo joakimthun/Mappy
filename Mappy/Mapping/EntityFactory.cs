@@ -8,9 +8,9 @@ namespace Mappy.Mapping
         {
         }
 
-        public TEntity CreateEntity<TEntity>() where TEntity : new()
+        public object CreateEntity(Type type)
         {
-            return Activator.CreateInstance<TEntity>();
+            return Activator.CreateInstance(type);
         }
     }
 }

@@ -51,49 +51,59 @@ namespace Mappy.Mapping
 
             while (reader.Read())
             {
-                result.Add(MapEntity<TEntity>(reader));
+                result.Add((TEntity)MapEntity(reader, new EntityInfo(typeof(TEntity))));
             }
 
             return result;
         }
 
-        private TEntity MapEntity<TEntity>(SqlDataReader reader) where TEntity : new()
+        private object MapEntity(SqlDataReader reader, EntityInfo entityInfo)
         {
-            var entity = _entityFactory.CreateEntity<TEntity>();
-            var aliasHelper = _aliasHelpers.Single(x => x.EntityType == typeof(TEntity));
+            var entity = _entityFactory.CreateEntity(entityInfo.EntityType);
 
-            for (var column = 0; column < reader.FieldCount; column++)
+            foreach (var property in entityInfo.SimpleProperties)
             {
-                var columnName = reader.GetName(column);
+                var aliasHelper = _aliasHelpers.Single(x => x.EntityType == entityInfo.EntityType);
+                var columnName = aliasHelper.GetColumnAlias(property.Name);
 
-                if (!aliasHelper.ColumnBelongsToEntity(columnName))
-                    continue;
+                var columnValue = GetColumnValue(reader, columnName);
+                SetPropertyValue(property.PropertyInfo, entity, columnValue);
+            }
 
-                var columnType = reader.GetFieldType(column);
-                var value = GetColumnValue(reader, columnType, column);
-
-                var propertyName = aliasHelper.GetPropertyName(columnName);
-
-                TrySetPropertyValue(entity, value, propertyName);
+            foreach (var relationship in entityInfo.OneToManyRelationships)
+            {
+                MapEntity(reader, relationship);
             }
 
             return entity;
         }
 
-        private object GetColumnValue(SqlDataReader reader, Type columnType, int column)
+        private void SetPropertyValue(PropertyInfo property, object entity, object value)
         {
-            return MethodInvoker.InvokeGenericMethod(reader, "GetFieldValue", columnType, column);
+            property.SetValue(entity, value);
         }
 
-        private void TrySetPropertyValue(object obj, object value, string propertyName)
+        private object GetColumnValue(SqlDataReader reader, string columnName)
         {
-            var type = obj.GetType();
-            var property = type.GetProperty(propertyName, BindingFlags.Public | BindingFlags.Instance);
+            for (var i = 0; i < reader.FieldCount; i++)
+            {
+                var column = reader.GetName(i);
+                if (column == columnName)
+                {
+                    if (reader.IsDBNull(i))
+                        return null;
 
-            if (property == null)
-                return;
+                    var columnType = reader.GetFieldType(i);
+                    return GetColumnValue(reader, columnType, i);
+                }
+            }
 
-            property.SetValue(obj, value);
+            return null;
+        }
+
+        private object GetColumnValue(SqlDataReader reader, Type columnType, int index)
+        {
+            return MethodInvoker.InvokeGenericMethod(reader, "GetFieldValue", columnType, index);
         }
     }
 }

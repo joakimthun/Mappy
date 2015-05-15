@@ -6,11 +6,6 @@ namespace Mappy.Extensions
 {
     internal static class PropertyInfoExtensions
     {
-        public static bool SupportedMappingType(this PropertyInfo propertyInfo)
-        {
-            return true;
-        }
-
         public static bool IsICollection(this PropertyInfo propertyInfo)
         {
             return typeof(ICollection<>).IsAssignableFrom(propertyInfo.PropertyType.GetGenericTypeDefinition());
@@ -29,6 +24,11 @@ namespace Mappy.Extensions
             }
 
             return propertyInfo.PropertyType;
+        }
+
+        public static bool IsMappyEntity(this PropertyInfo propertyInfo)
+        {
+            return propertyInfo.PropertyType.ImplementsInterface(typeof(IMappyEntity));
         }
     }
 }
