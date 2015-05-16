@@ -152,7 +152,7 @@ namespace Mappy.Mapping
         private IEnumerable<TEntity> GetDistinctEntities<TEntity>(EntityCollection entityCollection) where TEntity : new()
         {
             var entityType = typeof(TEntity);
-            var entities = entityCollection.GetEntities(entityType);
+            var entities = entityCollection.GetEntities(entityType) ?? new List<object>();
             var distinctEntities = new List<TEntity>();
 
             var primaryKey = _configuration.Schema.Constraints.OfType<PrimaryKey>().Single(pk => pk.Table.EntityType == entityType);

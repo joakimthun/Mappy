@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Application", "Application\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mappy", "Mappy\Mappy.csproj", "{BD90ED96-9ADB-457D-8B37-C5BB3DA9698C}"
 EndProject
+Project("{00D1A9C2-B5F0-4AF3-8072-F6C62B433612}") = "Database", "Database\Database.sqlproj", "{AE27C5CA-663F-450E-8B07-F23CD06E31BF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,12 @@ Global
 		{BD90ED96-9ADB-457D-8B37-C5BB3DA9698C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BD90ED96-9ADB-457D-8B37-C5BB3DA9698C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BD90ED96-9ADB-457D-8B37-C5BB3DA9698C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AE27C5CA-663F-450E-8B07-F23CD06E31BF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AE27C5CA-663F-450E-8B07-F23CD06E31BF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AE27C5CA-663F-450E-8B07-F23CD06E31BF}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{AE27C5CA-663F-450E-8B07-F23CD06E31BF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AE27C5CA-663F-450E-8B07-F23CD06E31BF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AE27C5CA-663F-450E-8B07-F23CD06E31BF}.Release|Any CPU.Deploy.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

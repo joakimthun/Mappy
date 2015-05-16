@@ -42,6 +42,13 @@ namespace Application
         }
     }
 
+    class User : IMappyEntity
+    {
+        public int Id { get; set; }
+        public string FirstName { get; set; }
+        public string LastName { get; set; }
+    }
+
     class Post : IMappyEntity
     {
         public int Id { get; set; }
@@ -49,6 +56,7 @@ namespace Application
         public DateTime? CreatedDate { get; set; }
         public bool Published { get; set; }
         public ICollection<Comment> Comments { get; set; }
+        public int UserId { get; set; }
     }
 
     class Comment : IMappyEntity
@@ -58,5 +66,6 @@ namespace Application
         public DateTime? CreatedDate { get; set; }
         public bool Published { get; set; }
         public int PostId { get; set; }
+        public int UserId { get; set; }
     }
 }

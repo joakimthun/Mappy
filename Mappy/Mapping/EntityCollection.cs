@@ -31,7 +31,10 @@ namespace Mappy.Mapping
 
         public IEnumerable<object> GetEntities(Type entityType)
         {
-            return _entities[entityType];
+            if(_entities.ContainsKey(entityType))
+                return _entities[entityType];
+
+            return null;
         }
     }
 }

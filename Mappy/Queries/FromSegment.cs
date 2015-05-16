@@ -51,7 +51,7 @@ namespace Mappy.Queries
 
         private string GetFkColumn(Include include)
         {
-            var foreignKey = _configuration.Schema.Constraints.OfType<ForeignKey>().Single(fk => fk.FkTable.Name == include.UnderlyingPropertyType.Name);
+            var foreignKey = _configuration.Schema.Constraints.OfType<ForeignKey>().Single(fk => fk.FkTable.Name == include.UnderlyingPropertyType.Name && fk.PkTable.Name == typeof(TEntity).Name);
 
             return string.Format("{0}.{1}", _helper.GetTableAlias(include.UnderlyingPropertyType), foreignKey.FkColumn.Name);
         }
