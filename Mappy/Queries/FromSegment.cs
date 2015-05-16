@@ -22,7 +22,7 @@ namespace Mappy.Queries
 
         private void AddFromStatement(StringBuilder sb)
         {
-            sb.Append(string.Format(" FROM {0} AS {1}", _table.Name, _helper.GetTableAlias(typeof(TEntity))));
+            sb.Append(string.Format(" FROM [{0}] AS {1}", _table.Name, _helper.GetTableAlias(typeof(TEntity))));
         }
 
         private void AddJoinStatement(StringBuilder sb)
@@ -31,7 +31,7 @@ namespace Mappy.Queries
             {
                 sb.Append(
                     string.Format(
-                    " {0} {1} AS {2} ON {3} = {4}",
+                    " {0} [{1}] AS {2} ON {3} = {4}",
                     GetJoinType(include),
                     include.UnderlyingPropertyType.Name,
                     _helper.GetTableAlias(include.UnderlyingPropertyType),
@@ -51,16 +51,40 @@ namespace Mappy.Queries
 
         private string GetFkColumn(Include include)
         {
-            var foreignKey = _configuration.Schema.Constraints.OfType<ForeignKey>().Single(fk => fk.FkTable.Name == include.UnderlyingPropertyType.Name && fk.PkTable.Name == typeof(TEntity).Name);
+            var foreignKey = GetForeignKey(include);
 
-            return string.Format("{0}.{1}", _helper.GetTableAlias(include.UnderlyingPropertyType), foreignKey.FkColumn.Name);
+            if (foreignKey.PkTable.Name == typeof(TEntity).Name)
+            {
+                return string.Format("{0}.{1}", _helper.GetTableAlias(include.UnderlyingPropertyType), foreignKey.FkColumn.Name);
+            }
+            else
+            {
+                return string.Format("{0}.{1}", _helper.GetTableAlias(include.UnderlyingPropertyType), foreignKey.PkColumn.Name);
+            }
         }
 
         private string GetPkColumn(Include include)
         {
             var primaryKey = _configuration.Schema.Constraints.OfType<PrimaryKey>().Single(pk => pk.Table.Name == _table.Name);
+            var foreignKey = GetForeignKey(include);
 
-            return string.Format("{0}.{1}", _helper.GetTableAlias(typeof(TEntity)), primaryKey.Column.Name);
+            if (foreignKey.PkTable.Name == typeof(TEntity).Name)
+            {
+                return string.Format("{0}.{1}", _helper.GetTableAlias(typeof(TEntity)), primaryKey.Column.Name);
+            }
+            else
+            {
+                return string.Format("{0}.{1}", _helper.GetTableAlias(typeof(TEntity)), foreignKey.FkColumn.Name);
+            }
+        }
+
+        private ForeignKey GetForeignKey(Include include)
+        {
+            var entityType = typeof(TEntity);
+
+            return _configuration.Schema.Constraints.OfType<ForeignKey>().Single(fk =>
+                (fk.FkTable.Name == include.UnderlyingPropertyType.Name && fk.PkTable.Name == entityType.Name) ||
+                (fk.PkTable.Name == include.UnderlyingPropertyType.Name && fk.FkTable.Name == entityType.Name));
         }
     }
 }

@@ -9,6 +9,9 @@ namespace Mappy.Extensions
     {
         public static bool IsICollection(this PropertyInfo propertyInfo)
         {
+            if (!propertyInfo.PropertyType.IsGenericType)
+                return false;
+
             return typeof(ICollection<>).IsAssignableFrom(propertyInfo.PropertyType.GetGenericTypeDefinition());
         }
 

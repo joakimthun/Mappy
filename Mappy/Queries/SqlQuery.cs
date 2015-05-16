@@ -71,9 +71,11 @@ namespace Mappy.Queries
 
             foreach (var include in _includes)
             {
-                if (!_configuration.Schema.Constraints.OfType<ForeignKey>().Any(fk => fk.FkTable.Name == include.UnderlyingPropertyType.Name && fk.PkTable.Name == _table.Name))
+                if (!_configuration.Schema.Constraints.OfType<ForeignKey>().Any(fk => 
+                    (fk.FkTable.Name == include.UnderlyingPropertyType.Name && fk.PkTable.Name == _table.Name) ||
+                    (fk.PkTable.Name == include.UnderlyingPropertyType.Name && fk.FkTable.Name == _table.Name)))
                 {
-                    throw new MappyException("The included property {0} does not have a valid foreign key to the table {1}", include, _table.Name);
+                    throw new MappyException("The included property {0} does not have a valid foreign key to the table {1}", include.PropertyName, _table.Name);
                 }
             }
         }

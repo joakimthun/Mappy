@@ -65,16 +65,23 @@ namespace Mappy.Mapping
         {
             var entity = _entityFactory.CreateEntity(entityInfo.EntityType);
 
-            foreach (var property in entityInfo.SimpleProperties)
+            var aliasHelper = _aliasHelpers.SingleOrDefault(x => x.EntityType == entityInfo.EntityType);
+            if (aliasHelper != null)
             {
-                var aliasHelper = _aliasHelpers.Single(x => x.EntityType == entityInfo.EntityType);
-                var columnName = aliasHelper.GetColumnAlias(property.Name);
-
-                var columnValue = GetColumnValue(reader, columnName);
-                SetPropertyValue(property.PropertyInfo, entity, columnValue);
+                foreach (var property in entityInfo.SimpleProperties)
+                {
+                    var columnName = aliasHelper.GetColumnAlias(property.Name);
+                    var columnValue = GetColumnValue(reader, columnName);
+                    SetPropertyValue(property.PropertyInfo, entity, columnValue);
+                }
             }
 
             foreach (var relationship in entityInfo.OneToManyRelationships)
+            {
+                MapEntity(reader, relationship, entityCollection);
+            }
+
+            foreach (var relationship in entityInfo.OneToOneRelationships)
             {
                 MapEntity(reader, relationship, entityCollection);
             }

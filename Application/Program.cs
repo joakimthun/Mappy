@@ -11,17 +11,17 @@ namespace Application
         {
             using (var context = new BlogContext())
             {
-                var query = new SqlQuery<Post>().Include(x => x.Comments);
+                var query = new SqlQuery<Post>().Include(x => x.Comments).Include(x => x.User);
                 var result = context.Repository<Post>(query);
 
                 foreach (var post in result)
                 {
-                    Console.WriteLine("{0} {1} {2} {3}", post.Id, post.Text, post.CreatedDate, post.Published);
+                    Console.WriteLine("{0} {1} {2} {3} {4}", post.Id, post.Text, post.CreatedDate, post.Published, post.UserId);
                     if (post.Comments != null)
                     {
                         foreach (var comment in post.Comments)
                         {
-                            Console.WriteLine("     {0} {1} {2} {3} {4}", comment.Id, comment.Text, comment.CreatedDate, comment.Published, comment.PostId);
+                            Console.WriteLine("     {0} {1} {2} {3} {4} {5}", comment.Id, comment.Text, comment.CreatedDate, comment.Published, comment.PostId, comment.UserId);
                         }
                     }
 
@@ -57,6 +57,7 @@ namespace Application
         public bool Published { get; set; }
         public ICollection<Comment> Comments { get; set; }
         public int UserId { get; set; }
+        public User User { get; set; }
     }
 
     class Comment : IMappyEntity
