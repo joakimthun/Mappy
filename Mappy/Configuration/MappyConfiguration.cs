@@ -1,5 +1,6 @@
 ﻿using Mappy.Schema;
 using Mappy.SqlServer;
+using System.Reflection;
 
 namespace Mappy.Configuration
 {
@@ -9,10 +10,10 @@ namespace Mappy.Configuration
         private ISchemaAnalyzer _schemaAnalyzer;
         private DatabaseSchema _schema;
 
-        public MappyConfiguration(string connectionString)
+        public MappyConfiguration(string connectionString, Assembly callingAssembly)
         {
             _connection = new SqlServerConnection(connectionString);
-            _schemaAnalyzer = new SqlServerSchemaAnalyzer(_connection);
+            _schemaAnalyzer = new SqlServerSchemaAnalyzer(_connection, callingAssembly);
         }
 
         public DatabaseSchema Schema

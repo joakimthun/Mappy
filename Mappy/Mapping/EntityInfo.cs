@@ -2,14 +2,17 @@
 using Mappy.Extensions;
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 
 namespace Mappy.Mapping
 {
     internal class EntityInfo
     {
-        public EntityInfo(Type type)
+        public EntityInfo(Type type, PropertyInfo parentPropertyInfo = null)
         {
             EntityType = type;
+            ParentPropertyInfo = parentPropertyInfo;
+
             SimpleProperties = new List<Property>();
             OneToOneRelationships = new List<EntityInfo>();
             OneToManyRelationships = new List<EntityInfo>();
@@ -18,6 +21,8 @@ namespace Mappy.Mapping
         }
 
         public Type EntityType { get; set; }
+
+        public PropertyInfo ParentPropertyInfo { get; set; }
 
         public ICollection<Property> SimpleProperties { get; set; }
 
@@ -39,11 +44,11 @@ namespace Mappy.Mapping
                 {
                     if (property.IsICollection())
                     {
-                        OneToManyRelationships.Add(new EntityInfo(property.GetUnderlyingPropertyType()));
+                        OneToManyRelationships.Add(new EntityInfo(property.GetUnderlyingPropertyType(), property));
                     }
                     else
                     {
-                        OneToOneRelationships.Add(new EntityInfo(property.PropertyType));
+                        OneToOneRelationships.Add(new EntityInfo(property.PropertyType, property));
                     }
                 }
             }

@@ -1,6 +1,7 @@
 ﻿using Mappy.Configuration;
 using Mappy.Schema;
 using System.Collections.Generic;
+using System.Reflection;
 
 namespace Mappy.SqlServer
 {
@@ -12,11 +13,13 @@ namespace Mappy.SqlServer
         const string ForeignKeysQueryTemplate = "EXEC sys.sp_fkeys '{0}'";
 
         private readonly IDatabaseConnection _connection;
+        private readonly Assembly _callingAssembly;
         private DatabaseSchema _schema;
 
-        public SqlServerSchemaAnalyzer(IDatabaseConnection connection)
+        public SqlServerSchemaAnalyzer(IDatabaseConnection connection, Assembly callingAssembly)
         {
             _connection = connection;
+            _callingAssembly = callingAssembly;
         }
 
         public DatabaseSchema GetSchema()
@@ -99,7 +102,7 @@ namespace Mappy.SqlServer
             {
                 while (reader.Read())
                 {
-                    tables.Add(new Table(reader));
+                    tables.Add(new Table(reader, _callingAssembly));
                 }
             }
 

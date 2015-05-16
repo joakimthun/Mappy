@@ -5,6 +5,7 @@ using Mappy.SqlServer;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 
 namespace Mappy
 {
@@ -17,7 +18,7 @@ namespace Mappy
         public DbContext(string connectionString)
         {
             _connection = new SqlServerConnection(connectionString);
-            _configuration = new MappyConfiguration(connectionString);
+            _configuration = new MappyConfiguration(connectionString, Assembly.GetCallingAssembly());
             _configurators = new List<IConfigurator>();
         }
 

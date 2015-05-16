@@ -17,6 +17,15 @@ namespace Application
                 foreach (var post in result)
                 {
                     Console.WriteLine("{0} {1} {2} {3}", post.Id, post.Text, post.CreatedDate, post.Published);
+                    if (post.Comments != null)
+                    {
+                        foreach (var comment in post.Comments)
+                        {
+                            Console.WriteLine("     {0} {1} {2} {3} {4}", comment.Id, comment.Text, comment.CreatedDate, comment.Published, comment.PostId);
+                        }
+                    }
+
+                    Console.WriteLine();
                 }
             }
 
