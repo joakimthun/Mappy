@@ -27,6 +27,8 @@ namespace Application
                         foreach (var comment in post.Comments)
                         {
                             Console.WriteLine("     {0} {1} {2} {3} {4} {5}", comment.Id, comment.Text, comment.CreatedDate, comment.Published, comment.PostId, comment.UserId);
+                            Console.WriteLine("     User:");
+                            Console.WriteLine("     {0} {1} {2}", comment.User.Id, comment.User.FirstName, comment.User.LastName);
                         }
                     }
 

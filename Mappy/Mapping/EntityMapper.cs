@@ -58,7 +58,7 @@ namespace Mappy.Mapping
                 MapEntity(reader, entityInfo, entityCollection);
             }
 
-            return MapEntityCollection<TEntity>(entityCollection, entityInfo);
+            return MapEntitiesFromCollection(entityCollection, entityInfo).Cast<TEntity>();
         }
 
         private void MapEntity(SqlDataReader reader, EntityInfo entityInfo, EntityCollection entityCollection)
@@ -120,66 +120,72 @@ namespace Mappy.Mapping
             return MethodInvoker.InvokeGenericMethod(reader, "GetFieldValue", columnType, index);
         }
 
-        private IEnumerable<TEntity> MapEntityCollection<TEntity>(EntityCollection entityCollection, EntityInfo entityInfo) where TEntity : new()
+        private IEnumerable<object> MapEntitiesFromCollection(EntityCollection entityCollection, EntityInfo entityInfo)
         {
-            var entities = new List<TEntity>();
+            var entities = new List<object>();
 
-            entities.AddRange(GetDistinctEntities<TEntity>(entityCollection));
-
-            if (entityInfo.OneToManyRelationships.Any())
+            foreach (var entity in entityCollection.GetEntities(entityInfo.EntityType))
             {
-                MapOneToManyRelationships<TEntity>(entities, entityCollection, entityInfo);
-            }
-
-            if (entityInfo.OneToOneRelationships.Any())
-            {
-                MapOneToOneRelationships<TEntity>(entities, entityCollection, entityInfo);
+                entities.Add(MapEntityFromCollection(entity, entityCollection, entityInfo));
             }
 
             return entities;
         }
 
-        private void MapOneToManyRelationships<TEntity>(List<TEntity> entities, EntityCollection entityCollection, EntityInfo entityInfo) where TEntity : new()
+        private object MapEntityFromCollection(object entity, EntityCollection entityCollection, EntityInfo entityInfo)
         {
-            var entityType = typeof(TEntity);
-
-            foreach (var entity in entities)
+            if (entityInfo.OneToManyRelationships.Any())
             {
-                foreach (var relationship in entityInfo.OneToManyRelationships)
-                {
-                    var foreignKey = _configuration.Schema.Constraints.OfType<ForeignKey>().Single(fk => fk.PkTable.EntityType == entityType && fk.FkTable.EntityType == relationship.EntityType);
-                    var relationshipEntities = entityCollection.GetEntities(foreignKey.FkTable.EntityType);
+                MapOneToManyRelationships(entity, entityCollection, entityInfo);
+            }
 
-                    var childEntities = GetChildEntities(entity, foreignKey, relationshipEntities);
-                    if (childEntities.Any())
-                    {
-                        SetCollectionPropertyValue(relationship.ParentPropertyInfo, entity, childEntities, foreignKey.FkTable.EntityType);
-                    }
+            if (entityInfo.OneToOneRelationships.Any())
+            {
+                MapOneToOneRelationships(entity, entityCollection, entityInfo);
+            }
+
+            return entity;
+        }
+
+        private void MapOneToManyRelationships(object entity, EntityCollection entityCollection, EntityInfo entityInfo)
+        {
+            foreach (var relationship in entityInfo.OneToManyRelationships)
+            {
+                var foreignKey = _configuration.Schema.Constraints.OfType<ForeignKey>().Single(fk => fk.PkTable.EntityType == entityInfo.EntityType && fk.FkTable.EntityType == relationship.EntityType);
+                var relationshipEntities = entityCollection.GetEntities(foreignKey.FkTable.EntityType);
+
+                var childEntities = GetChildEntities(entity, foreignKey, relationshipEntities);
+
+                foreach (var childEntity in childEntities)
+                {
+                    MapEntityFromCollection(childEntity, entityCollection, relationship);
+                }
+
+                if (childEntities.Any())
+                {
+                    SetCollectionPropertyValue(relationship.ParentPropertyInfo, entity, childEntities, foreignKey.FkTable.EntityType);
                 }
             }
         }
 
-        private void MapOneToOneRelationships<TEntity>(List<TEntity> entities, EntityCollection entityCollection, EntityInfo entityInfo) where TEntity : new()
+        private void MapOneToOneRelationships(object entity, EntityCollection entityCollection, EntityInfo entityInfo)
         {
-            var entityType = typeof(TEntity);
-
-            foreach (var entity in entities)
+            foreach (var relationship in entityInfo.OneToOneRelationships)
             {
-                foreach (var relationship in entityInfo.OneToOneRelationships)
-                {
-                    // The following lines of code is used to determine in what table the foreign key column lives
-                    var thisForeignKey = _configuration.Schema.Constraints.OfType<ForeignKey>().SingleOrDefault(fk => fk.PkTable.EntityType == entityType && fk.FkTable.EntityType == relationship.EntityType);
+                // The following lines of code is used to determine in what table the foreign key column lives
+                var thisForeignKey = _configuration.Schema.Constraints.OfType<ForeignKey>().SingleOrDefault(fk => fk.PkTable.EntityType == entityInfo.EntityType && fk.FkTable.EntityType == relationship.EntityType);
 
-                    var otherForeignKey = _configuration.Schema.Constraints.OfType<ForeignKey>().SingleOrDefault(fk => fk.FkTable.EntityType == entityType && fk.PkTable.EntityType == relationship.EntityType);
+                var otherForeignKey = _configuration.Schema.Constraints.OfType<ForeignKey>().SingleOrDefault(fk => fk.FkTable.EntityType == entityInfo.EntityType && fk.PkTable.EntityType == relationship.EntityType);
 
-                    var targetEntityType = thisForeignKey != null ? thisForeignKey.FkTable.EntityType : otherForeignKey.PkTable.EntityType;
+                var targetEntityType = thisForeignKey != null ? thisForeignKey.FkTable.EntityType : otherForeignKey.PkTable.EntityType;
 
-                    var relationshipEntities = entityCollection.GetEntities(targetEntityType);
+                var relationshipEntities = entityCollection.GetEntities(targetEntityType);
 
-                    var childEntity = GetChildEntity(entity, thisForeignKey ?? otherForeignKey, relationshipEntities);
+                var childEntity = GetChildEntity(entity, thisForeignKey ?? otherForeignKey, relationshipEntities);
 
-                    SetPropertyValue(relationship.ParentPropertyInfo, entity, childEntity);
-                }
+                MapEntityFromCollection(childEntity, entityCollection, relationship);
+
+                SetPropertyValue(relationship.ParentPropertyInfo, entity, childEntity);
             }
         }
 
@@ -196,7 +202,6 @@ namespace Mappy.Mapping
             var parentKeyProperty = foreignKey.PkTable.EntityType.GetProperty(foreignKey.PkColumn.Name);
             var childKeyProperty = foreignKey.FkTable.EntityType.GetProperty(foreignKey.FkColumn.Name);
 
-            // TODO: Fix the duplicate values
             var matchingChildren = children.Where(x => parentKeyProperty.AreValuesEqual(childKeyProperty, parent, x));
 
             if (matchingChildren.Count() != 1)
@@ -206,26 +211,6 @@ namespace Mappy.Mapping
             }
             
             return matchingChildren.Single();
-        }
-
-        private IEnumerable<TEntity> GetDistinctEntities<TEntity>(EntityCollection entityCollection) where TEntity : new()
-        {
-            var entityType = typeof(TEntity);
-            var entities = entityCollection.GetEntities(entityType) ?? new List<object>();
-            var distinctEntities = new List<TEntity>();
-
-            var primaryKey = _configuration.Schema.Constraints.OfType<PrimaryKey>().Single(pk => pk.Table.EntityType == entityType);
-            var primaryKeyProperty = entityType.GetProperty(primaryKey.Column.Name);
-
-            foreach (var entity in entities)
-            {
-                if (!distinctEntities.Any(e => primaryKeyProperty.AreValuesEqual(entity, e)))
-                {
-                    distinctEntities.Add((TEntity)entity);
-                }
-            }
-
-            return distinctEntities;
         }
 
         private void SetPropertyValue(PropertyInfo property, object entity, object value)
