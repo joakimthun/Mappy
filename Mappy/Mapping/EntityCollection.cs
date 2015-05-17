@@ -1,18 +1,24 @@
-﻿using System;
+﻿using Mappy.Configuration;
+using Mappy.Extensions;
+using Mappy.Schema;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Mappy.Mapping
 {
     internal class EntityCollection
     {
+        private MappyConfiguration _configuration;
         private Dictionary<Type, List<object>> _entities;
 
-        public EntityCollection()
+        public EntityCollection(MappyConfiguration configuration)
         {
+            _configuration = configuration;
             _entities = new Dictionary<Type, List<object>>();
         }
 
-        public void AddEntity(object entity)
+        public void AddDistinctEntity(object entity)
         {
             var entityType = entity.GetType();
 
@@ -21,7 +27,13 @@ namespace Mappy.Mapping
                 _entities.Add(entityType, new List<object>());
             }
 
-            _entities[entityType].Add(entity);
+            var primaryKey = _configuration.Schema.Constraints.OfType<PrimaryKey>().Single(pk => pk.Table.EntityType == entityType);
+            var primaryKeyProperty = entityType.GetProperty(primaryKey.Column.Name);
+
+            if (!_entities[entityType].Any(x => primaryKeyProperty.AreValuesEqual(x, entity)))
+            {
+                _entities[entityType].Add(entity);
+            }
         }
 
         public IEnumerable<Type> AllEntityTypes()

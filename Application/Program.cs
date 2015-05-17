@@ -16,9 +16,14 @@ namespace Application
 
                 foreach (var post in result)
                 {
+                    Console.WriteLine("Post:");
                     Console.WriteLine("{0} {1} {2} {3} {4}", post.Id, post.Text, post.CreatedDate, post.Published, post.UserId);
+
+                    Console.WriteLine("User:");
+                    Console.WriteLine("{0} {1} {2}", post.User.Id, post.User.FirstName, post.User.LastName);
                     if (post.Comments != null)
                     {
+                        Console.WriteLine("Comments:");
                         foreach (var comment in post.Comments)
                         {
                             Console.WriteLine("     {0} {1} {2} {3} {4} {5}", comment.Id, comment.Text, comment.CreatedDate, comment.Published, comment.PostId, comment.UserId);
@@ -68,5 +73,6 @@ namespace Application
         public bool Published { get; set; }
         public int PostId { get; set; }
         public int UserId { get; set; }
+        public User User { get; set; }
     }
 }

@@ -50,7 +50,7 @@ namespace Mappy.Mapping
 
         private IEnumerable<TEntity> MapImpl<TEntity>(SqlDataReader reader) where TEntity : new()
         {
-            var entityCollection = new EntityCollection();
+            var entityCollection = new EntityCollection(_configuration);
             var entityInfo = new EntityInfo(typeof(TEntity));
 
             while (reader.Read())
@@ -61,37 +61,41 @@ namespace Mappy.Mapping
             return MapEntityCollection<TEntity>(entityCollection, entityInfo);
         }
 
-        private object MapEntity(SqlDataReader reader, EntityInfo entityInfo, EntityCollection entityCollection)
+        private void MapEntity(SqlDataReader reader, EntityInfo entityInfo, EntityCollection entityCollection)
         {
             var entity = _entityFactory.CreateEntity(entityInfo.EntityType);
 
             var aliasHelper = _aliasHelpers.SingleOrDefault(x => x.EntityType == entityInfo.EntityType);
+            var hasValues = false;
+
             if (aliasHelper != null)
             {
                 foreach (var property in entityInfo.SimpleProperties)
                 {
                     var columnName = aliasHelper.GetColumnAlias(property.Name);
-                    var columnValue = GetColumnValue(reader, columnName);
+                    var columnValue = GetColumnValue(reader, columnName, ref hasValues);
                     SetPropertyValue(property.PropertyInfo, entity, columnValue);
                 }
             }
 
-            foreach (var relationship in entityInfo.OneToManyRelationships)
+            // If hasValues has not been set to true the entity has all its properties set to default values and we do not need to add it. E.g. a outer join result.
+            if (hasValues)
             {
-                MapEntity(reader, relationship, entityCollection);
+                foreach (var relationship in entityInfo.OneToManyRelationships)
+                {
+                    MapEntity(reader, relationship, entityCollection);
+                }
+
+                foreach (var relationship in entityInfo.OneToOneRelationships)
+                {
+                    MapEntity(reader, relationship, entityCollection);
+                }
+
+                entityCollection.AddDistinctEntity(entity);
             }
-
-            foreach (var relationship in entityInfo.OneToOneRelationships)
-            {
-                MapEntity(reader, relationship, entityCollection);
-            }
-
-            entityCollection.AddEntity(entity);
-
-            return entity;
         }
 
-        private object GetColumnValue(SqlDataReader reader, string columnName)
+        private object GetColumnValue(SqlDataReader reader, string columnName, ref bool hasValue)
         {
             for (var i = 0; i < reader.FieldCount; i++)
             {
@@ -102,7 +106,9 @@ namespace Mappy.Mapping
                         return null;
 
                     var columnType = reader.GetFieldType(i);
-                    return GetColumnValue(reader, columnType, i);
+                    var value = GetColumnValue(reader, columnType, i);
+                    hasValue = true;
+                    return value;
                 }
             }
 
@@ -123,6 +129,11 @@ namespace Mappy.Mapping
             if (entityInfo.OneToManyRelationships.Any())
             {
                 MapOneToManyRelationships<TEntity>(entities, entityCollection, entityInfo);
+            }
+
+            if (entityInfo.OneToOneRelationships.Any())
+            {
+                MapOneToOneRelationships<TEntity>(entities, entityCollection, entityInfo);
             }
 
             return entities;
@@ -148,12 +159,53 @@ namespace Mappy.Mapping
             }
         }
 
+        private void MapOneToOneRelationships<TEntity>(List<TEntity> entities, EntityCollection entityCollection, EntityInfo entityInfo) where TEntity : new()
+        {
+            var entityType = typeof(TEntity);
+
+            foreach (var entity in entities)
+            {
+                foreach (var relationship in entityInfo.OneToOneRelationships)
+                {
+                    // The following lines of code is used to determine in what table the foreign key column lives
+                    var thisForeignKey = _configuration.Schema.Constraints.OfType<ForeignKey>().SingleOrDefault(fk => fk.PkTable.EntityType == entityType && fk.FkTable.EntityType == relationship.EntityType);
+
+                    var otherForeignKey = _configuration.Schema.Constraints.OfType<ForeignKey>().SingleOrDefault(fk => fk.FkTable.EntityType == entityType && fk.PkTable.EntityType == relationship.EntityType);
+
+                    var targetEntityType = thisForeignKey != null ? thisForeignKey.FkTable.EntityType : otherForeignKey.PkTable.EntityType;
+
+                    var relationshipEntities = entityCollection.GetEntities(targetEntityType);
+
+                    var childEntity = GetChildEntity(entity, thisForeignKey ?? otherForeignKey, relationshipEntities);
+
+                    SetPropertyValue(relationship.ParentPropertyInfo, entity, childEntity);
+                }
+            }
+        }
+
         private IEnumerable<object> GetChildEntities(object parent, ForeignKey foreignKey, IEnumerable<object> children)
         {
             var parentKeyProperty = foreignKey.PkTable.EntityType.GetProperty(foreignKey.PkColumn.Name);
             var childKeyProperty = foreignKey.FkTable.EntityType.GetProperty(foreignKey.FkColumn.Name);
 
             return children.Where(x => parentKeyProperty.AreValuesEqual(childKeyProperty, parent, x));
+        }
+
+        private object GetChildEntity(object parent, ForeignKey foreignKey, IEnumerable<object> children)
+        {
+            var parentKeyProperty = foreignKey.PkTable.EntityType.GetProperty(foreignKey.PkColumn.Name);
+            var childKeyProperty = foreignKey.FkTable.EntityType.GetProperty(foreignKey.FkColumn.Name);
+
+            // TODO: Fix the duplicate values
+            var matchingChildren = children.Where(x => parentKeyProperty.AreValuesEqual(childKeyProperty, parent, x));
+
+            if (matchingChildren.Count() != 1)
+            {
+                var childType = foreignKey.PkTable.EntityType == parent.GetType() ? foreignKey.FkTable.EntityType : foreignKey.PkTable.EntityType;
+                throw new MappyException("Expected one '{0}' to match the '{1}' found '{2}' matching entities", childType.FullName, parent.GetType().FullName, matchingChildren.Count());
+            }
+            
+            return matchingChildren.Single();
         }
 
         private IEnumerable<TEntity> GetDistinctEntities<TEntity>(EntityCollection entityCollection) where TEntity : new()

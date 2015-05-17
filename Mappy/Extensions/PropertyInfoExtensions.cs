@@ -45,10 +45,26 @@ namespace Mappy.Extensions
 
         public static bool AreValuesEqual(this PropertyInfo propertyInfo1, PropertyInfo propertyInfo2, object obj1, object obj2)
         {
-            var value1 = propertyInfo1.GetValue(obj1);
-            var value2 = propertyInfo2.GetValue(obj2);
+            object value1;
+            object value2;
+
+            GetPropertyValues(propertyInfo1, propertyInfo2, obj1, obj2, out value1, out value2);
 
             return AreValuesEqual(value1, value2);
+        }
+
+        private static void GetPropertyValues(PropertyInfo propertyInfo1, PropertyInfo propertyInfo2, object obj1, object obj2, out object value1, out object value2)
+        {
+            if (propertyInfo1.DeclaringType == obj1.GetType())
+            {
+                value1 = propertyInfo1.GetValue(obj1);
+                value2 = propertyInfo2.GetValue(obj2);
+            }
+            else
+            {
+                value1 = propertyInfo1.GetValue(obj2);
+                value2 = propertyInfo2.GetValue(obj1);
+            }
         }
 
         private static bool AreValuesEqual(object value1, object value2)
