@@ -18,12 +18,14 @@ namespace Mappy.Mapping
         private readonly MappyConfiguration _configuration;
         private readonly EntityFactory _entityFactory;
         private readonly List<AliasHelper> _aliasHelpers;
+        private readonly bool _lazyLoading;
 
-        public EntityMapper(MappyConfiguration configuration, List<AliasHelper> aliasHelpers)
+        public EntityMapper(MappyConfiguration configuration, List<AliasHelper> aliasHelpers, bool lazyLoading)
         {
             _configuration = configuration;
-            _entityFactory = new EntityFactory();
+            _entityFactory = new EntityFactory(lazyLoading);
             _aliasHelpers = aliasHelpers;
+            _lazyLoading = lazyLoading;
         }
 
         public IEnumerable<TEntity> Map<TEntity>(SqlDataReader reader) where TEntity : new()

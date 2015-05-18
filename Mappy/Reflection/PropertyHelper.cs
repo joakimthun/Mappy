@@ -14,7 +14,12 @@ namespace Mappy.Reflection
 
         public static IEnumerable<PropertyInfo> GetPublicInstanceProperties(Type type)
         {
-            return type.GetProperties(BindingFlags.Public | BindingFlags.Instance).ToList();
+            return type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+        }
+
+        public static IEnumerable<PropertyInfo> GetPublicVirtualInstanceProperties(Type type)
+        {
+            return type.GetProperties(BindingFlags.Instance | BindingFlags.Public).Where(x => x.GetGetMethod().IsVirtual);
         }
     }
 }

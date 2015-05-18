@@ -50,9 +50,12 @@
     <Compile Include="Configuration\SupportedTypes.cs" />
     <Compile Include="Extensions\AssemblyExtensions.cs" />
     <Compile Include="Extensions\IEnumerableExtensions.cs" />
+    <Compile Include="Extensions\ObjectExtensions.cs" />
     <Compile Include="Extensions\PropertyInfoExtensions.cs" />
     <Compile Include="IDatabaseConnection.cs" />
     <Compile Include="IMappyEntity.cs" />
+    <Compile Include="LazyLoading\IMappyProxy.cs" />
+    <Compile Include="LazyLoading\ProxyFactory.cs" />
     <Compile Include="Mapping\EntityCollection.cs" />
     <Compile Include="Mapping\EntityInfo.cs" />
     <Compile Include="Mapping\Property.cs" />

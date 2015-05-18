@@ -8,6 +8,8 @@ namespace Mappy.Schema
 {
     internal class Table
     {
+        private Type _entityType;
+
         public Table(SqlDataReader reader, Assembly callingAssembly)
         {
             Init(reader);
@@ -16,7 +18,19 @@ namespace Mappy.Schema
 
         public string Name { get; set; }
         public ICollection<Column> Columns { get; set; }
-        public Type EntityType { get; set; }
+
+        public Type EntityType
+        {
+            get
+            {
+                return _entityType;
+            }
+
+            set
+            {
+                _entityType = value;
+            }
+        }
 
         private void Init(SqlDataReader reader)
         {

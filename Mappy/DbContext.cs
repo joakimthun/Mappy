@@ -20,7 +20,11 @@ namespace Mappy
             _connection = new SqlServerConnection(connectionString);
             _configuration = new MappyConfiguration(connectionString, Assembly.GetCallingAssembly());
             _configurators = new List<IConfigurator>();
+
+            LazyLoading = true;
         }
+
+        public bool LazyLoading { get; set; }
 
         public IEnumerable<TEntity> Repository<TEntity>(SqlQuery<TEntity> query = null) where TEntity : new()
         {
@@ -55,7 +59,7 @@ namespace Mappy
 
             var compiledQuery = query.Compile();
 
-            var entityMapper = new EntityMapper(_configuration, query.AliasHelpers);
+            var entityMapper = new EntityMapper(_configuration, query.AliasHelpers, LazyLoading);
 
             using (var command = _connection.GetCommand(compiledQuery))
             using (var reader = command.ExecuteReader())

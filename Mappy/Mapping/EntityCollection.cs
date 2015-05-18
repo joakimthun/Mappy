@@ -20,7 +20,7 @@ namespace Mappy.Mapping
 
         public void AddDistinctEntity(object entity)
         {
-            var entityType = entity.GetType();
+            var entityType = entity.GetStaticType();
 
             if (!_entities.ContainsKey(entityType))
             {

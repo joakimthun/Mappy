@@ -1,4 +1,5 @@
 ﻿using Mappy;
+using Mappy.LazyLoading;
 using Mappy.Queries;
 using System;
 using System.Collections.Generic;
@@ -13,12 +14,12 @@ namespace Application
             {
                 var query = new SqlQuery<Post>().Include(x => x.Comments).Include(x => x.User);
                 var result = context.Repository<Post>(query);
-
+            
                 foreach (var post in result)
                 {
                     Console.WriteLine("Post:");
                     Console.WriteLine("{0} {1} {2} {3} {4}", post.Id, post.Text, post.CreatedDate, post.Published, post.UserId);
-
+            
                     Console.WriteLine("User:");
                     Console.WriteLine("{0} {1} {2}", post.User.Id, post.User.FirstName, post.User.LastName);
                     if (post.Comments != null)
@@ -31,7 +32,7 @@ namespace Application
                             Console.WriteLine("     {0} {1} {2}", comment.User.Id, comment.User.FirstName, comment.User.LastName);
                         }
                     }
-
+            
                     Console.WriteLine();
                 }
             }
@@ -40,7 +41,7 @@ namespace Application
         }
     }
 
-    class BlogContext : DbContext
+    public class BlogContext : DbContext
     {
         public BlogContext() : base("Default")
         {
@@ -49,25 +50,25 @@ namespace Application
         }
     }
 
-    class User : IMappyEntity
+    public class User : IMappyEntity
     {
         public int Id { get; set; }
         public string FirstName { get; set; }
         public string LastName { get; set; }
     }
 
-    class Post : IMappyEntity
+    public class Post : IMappyEntity
     {
         public int Id { get; set; }
         public string Text { get; set; }
         public DateTime? CreatedDate { get; set; }
         public bool Published { get; set; }
-        public ICollection<Comment> Comments { get; set; }
+        public virtual ICollection<Comment> Comments { get; set; }
         public int UserId { get; set; }
         public User User { get; set; }
     }
 
-    class Comment : IMappyEntity
+    public class Comment : IMappyEntity
     {
         public int Id { get; set; }
         public string Text { get; set; }

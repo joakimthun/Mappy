@@ -1,4 +1,5 @@
 ﻿using Mappy.Exceptions;
+using Mappy.LazyLoading;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -35,6 +36,19 @@ namespace Mappy.Extensions
             return propertyInfo.PropertyType.ImplementsInterface(typeof(IMappyEntity));
         }
 
+        public static object GetSafeValue(this PropertyInfo propertyInfo, object obj)
+        {
+            var objType = obj.GetType();
+        
+            if (objType.ImplementsInterface(typeof(IMappyProxy)))
+            {
+                var proxyProperty = objType.GetProperty(propertyInfo.Name);
+                return proxyProperty.GetValue(obj);
+            }
+        
+            return propertyInfo.GetValue(obj);
+        }
+
         public static bool AreValuesEqual(this PropertyInfo propertyInfo, object obj1, object obj2)
         {
             var value1 = propertyInfo.GetValue(obj1);
@@ -55,7 +69,7 @@ namespace Mappy.Extensions
 
         private static void GetPropertyValues(PropertyInfo propertyInfo1, PropertyInfo propertyInfo2, object obj1, object obj2, out object value1, out object value2)
         {
-            if (propertyInfo1.DeclaringType == obj1.GetType())
+            if (propertyInfo1.DeclaringType == obj1.GetType() || propertyInfo1.DeclaringType == obj1.GetType().BaseType)
             {
                 value1 = propertyInfo1.GetValue(obj1);
                 value2 = propertyInfo2.GetValue(obj2);

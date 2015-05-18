@@ -21,5 +21,10 @@ namespace Mappy.Extensions
         {
             return type.ImplementsInterface(typeof(IMappyEntity));
         }
+
+        public static IEnumerable<PropertyInfo> GetPublicVirtualInstanceProperties(this Type type)
+        {
+            return Reflection.PropertyHelper.GetPublicVirtualInstanceProperties(type);
+        }
     }
 }
