@@ -18,15 +18,20 @@ namespace Mappy
         public DbContext(string connectionString)
         {
             _connection = new SqlServerConnection(connectionString);
-            _configuration = new MappyConfiguration(connectionString, Assembly.GetCallingAssembly());
+            _configuration = new MappyConfiguration(connectionString, Assembly.GetCallingAssembly(), GetType());
             _configurators = new List<IConfigurator>();
 
             LazyLoading = true;
         }
 
-        public bool LazyLoading { get; set; }
+        public bool LazyLoading { get; private set; }
 
-        public IEnumerable<TEntity> Repository<TEntity>(SqlQuery<TEntity> query = null) where TEntity : new()
+        public IEnumerable<TEntity> Repository<TEntity>() where TEntity : new()
+        {
+            return Repository<TEntity>(null);
+        }
+
+        public IEnumerable<TEntity> Repository<TEntity>(SqlQuery<TEntity> query) where TEntity : new()
         {
             return RepositoryImpl(query);
         }

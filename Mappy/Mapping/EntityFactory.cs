@@ -1,4 +1,5 @@
-﻿using Mappy.LazyLoading;
+﻿using Mappy.Configuration;
+using Mappy.LazyLoading;
 using Mappy.Reflection;
 using System;
 
@@ -6,12 +7,14 @@ namespace Mappy.Mapping
 {
     internal class EntityFactory
     {
-        private ProxyFactory _proxyFactory;
-        private bool _lazyLoading;
+        private readonly MappyConfiguration _configuration;
+        private readonly ProxyFactory _proxyFactory;
+        private readonly bool _lazyLoading;
 
-        public EntityFactory(bool lazyLoading)
+        public EntityFactory(MappyConfiguration configuration, bool lazyLoading)
         {
-            _proxyFactory = new ProxyFactory();
+            _configuration = configuration;
+            _proxyFactory = new ProxyFactory(configuration);
             _lazyLoading = lazyLoading;
         }
 

@@ -1,4 +1,5 @@
-﻿using Mappy.Extensions;
+﻿using Mappy.Configuration;
+using Mappy.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,19 +8,21 @@ using System.Reflection.Emit;
 
 namespace Mappy.LazyLoading
 {
-    public class ProxyFactory
+    internal class ProxyFactory
     {
         private const string DynamicAssemblyName = "Mappy_Dynamic";
         private const string DynamicModuleName = "Proxies";
 
+        private readonly MappyConfiguration _configuration;
         private readonly Dictionary<Type, Type> _typeCache;
 
         private AssemblyBuilder _assemblyBuilder;
         private ModuleBuilder _moduleBuilder;
         private Random _random;
 
-        public ProxyFactory()
+        public ProxyFactory(MappyConfiguration configuration)
         {
+            _configuration = configuration;
             _typeCache = new Dictionary<Type, Type>();
         }
 
@@ -91,13 +94,13 @@ namespace Mappy.LazyLoading
         {
             var property = DefineProperty(typeBuilder, propertyInfo);
             var field = DefineField(typeBuilder, propertyInfo);
-            //var getter = DefineGetter(typeBuilder, propertyInfo, field);
+            var getter = DefineGetter(typeBuilder, propertyInfo, field);
 
-            var test = DefineGetterTest(typeBuilder, propertyInfo, field);
+            //var test = DefineGetterTest(typeBuilder, propertyInfo, field);
 
             var setter = DefineSetter(typeBuilder, propertyInfo, field);
 
-            property.SetGetMethod(test);
+            property.SetGetMethod(getter);
             property.SetSetMethod(setter);
         }
 
@@ -117,13 +120,26 @@ namespace Mappy.LazyLoading
                 propertyType = propertyInfo.PropertyType;
             }
 
-            var local = ilGenerator.DeclareLocal(propertyType);
-            var constructorInfo = propertyType.GetConstructor(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance, null, new Type[0], null);
+            var propertyTypeLocal = ilGenerator.DeclareLocal(propertyType);
+            var propertyTypeConstructorInfo = propertyType.GetConstructor(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance, null, new Type[0], null);
 
-            ilGenerator.Emit(OpCodes.Newobj, constructorInfo);
-            ilGenerator.Emit(OpCodes.Stloc, local);
+            ilGenerator.Emit(OpCodes.Newobj, propertyTypeConstructorInfo);
+            ilGenerator.Emit(OpCodes.Stloc, propertyTypeLocal);
 
-            ilGenerator.Emit(OpCodes.Ldloc, local);
+            var contextLocal = ilGenerator.DeclareLocal(_configuration.ContextType);
+            var contextConstructorInfo = _configuration.ContextType.GetConstructor(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance, null, new Type[0], null);
+
+            ilGenerator.Emit(OpCodes.Newobj, contextConstructorInfo);
+            ilGenerator.Emit(OpCodes.Stloc, contextLocal);
+
+            var entityType = GetEntityType(propertyInfo);
+            var repositoryMethodInfo = _configuration.ContextType.GetMethod("Repository", new Type[0]).MakeGenericMethod(entityType);
+
+            ilGenerator.Emit(OpCodes.Ldloc, contextLocal);
+            //ilGenerator.Emit(OpCodes.Ldnull, );
+            ilGenerator.Emit(OpCodes.Call, repositoryMethodInfo);
+
+            ilGenerator.Emit(OpCodes.Ldloc, propertyTypeLocal);
 
             ilGenerator.Emit(OpCodes.Ret);
 
@@ -165,6 +181,14 @@ namespace Mappy.LazyLoading
             //} // end of method 
 
             return getter;
+        }
+
+        private Type GetEntityType(PropertyInfo propertyInfo)
+        {
+            if (propertyInfo.IsICollection())
+                return propertyInfo.GetUnderlyingPropertyType();
+
+            return propertyInfo.PropertyType;
         }
 
         private MethodBuilder DefineGetter(TypeBuilder typeBuilder, PropertyInfo propertyInfo, FieldBuilder field)

@@ -23,7 +23,7 @@ namespace Mappy.Mapping
         public EntityMapper(MappyConfiguration configuration, List<AliasHelper> aliasHelpers, bool lazyLoading)
         {
             _configuration = configuration;
-            _entityFactory = new EntityFactory(lazyLoading);
+            _entityFactory = new EntityFactory(configuration, lazyLoading);
             _aliasHelpers = aliasHelpers;
             _lazyLoading = lazyLoading;
         }
