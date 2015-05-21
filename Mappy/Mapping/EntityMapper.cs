@@ -136,6 +136,9 @@ namespace Mappy.Mapping
 
         private object MapEntityFromCollection(object entity, EntityCollection entityCollection, EntityInfo entityInfo)
         {
+            if (entity == null)
+                return null;
+
             if (entityInfo.OneToManyRelationships.Any())
             {
                 MapOneToManyRelationships(entity, entityCollection, entityInfo);
@@ -157,6 +160,9 @@ namespace Mappy.Mapping
                 var relationshipEntities = entityCollection.GetEntities(foreignKey.FkTable.EntityType);
 
                 var childEntities = GetChildEntities(entity, foreignKey, relationshipEntities);
+
+                if (childEntities == null)
+                    continue;
 
                 foreach (var childEntity in childEntities)
                 {
@@ -193,6 +199,9 @@ namespace Mappy.Mapping
 
         private IEnumerable<object> GetChildEntities(object parent, ForeignKey foreignKey, IEnumerable<object> children)
         {
+            if (children == null)
+                return null;
+
             var parentKeyProperty = foreignKey.PkTable.EntityType.GetProperty(foreignKey.PkColumn.Name);
             var childKeyProperty = foreignKey.FkTable.EntityType.GetProperty(foreignKey.FkColumn.Name);
 
@@ -201,6 +210,9 @@ namespace Mappy.Mapping
 
         private object GetChildEntity(object parent, ForeignKey foreignKey, IEnumerable<object> children)
         {
+            if (children == null)
+                return null;
+
             var parentKeyProperty = foreignKey.PkTable.EntityType.GetProperty(foreignKey.PkColumn.Name);
             var childKeyProperty = foreignKey.FkTable.EntityType.GetProperty(foreignKey.FkColumn.Name);
 

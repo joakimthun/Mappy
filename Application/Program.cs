@@ -13,7 +13,10 @@ namespace Application
         {
             using (var context = new BlogContext())
             {
-                var query = new SqlQuery<Post>().Include(x => x.Comments).Include(x => x.User);
+                var query = new SqlQuery<Post>()
+                    //.Include(x => x.Comments)
+                    .Include(x => x.User);
+
                 var result = context.Repository<Post>(query);
             
                 foreach (var post in result)
@@ -29,14 +32,19 @@ namespace Application
                         foreach (var comment in post.Comments)
                         {
                             Console.WriteLine("     {0} {1} {2} {3} {4} {5}", comment.Id, comment.Text, comment.CreatedDate, comment.Published, comment.PostId, comment.UserId);
-                            Console.WriteLine("     User:");
-                            Console.WriteLine("     {0} {1} {2}", comment.User.Id, comment.User.FirstName, comment.User.LastName);
+                            if (comment.User != null)
+                            {
+                                Console.WriteLine("     User:");
+                                Console.WriteLine("     {0} {1} {2}", comment.User.Id, comment.User.FirstName, comment.User.LastName);
+                            }
                         }
                     }
             
                     Console.WriteLine();
                 }
             }
+
+            var t = new Test();
 
             Console.ReadKey();
         }
@@ -78,5 +86,31 @@ namespace Application
         public int PostId { get; set; }
         public int UserId { get; set; }
         public User User { get; set; }
+    }
+
+    public class Test
+    {
+        private ICollection<Comment> _comments;
+
+        public ICollection<Comment> MyProperty
+        {
+            get
+            {
+                if (MyProperty != null)
+                {
+                    return MyProperty;
+                }
+
+                var context = new BlogContext();
+                MyProperty = context.Repository<Comment>().ToList();
+
+                return MyProperty;
+            }
+
+            set
+            {
+                this._comments = value;
+            }
+        }
     }
 }

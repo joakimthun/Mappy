@@ -11,14 +11,21 @@ namespace Mappy
 {
     public class DbContext : IDisposable
     {
+        [ThreadStatic]
+        private static MappyConfiguration _configuration;
+
         private readonly IDatabaseConnection _connection;
-        private readonly MappyConfiguration _configuration;
         private readonly List<IConfigurator> _configurators;
 
         public DbContext(string connectionString)
         {
             _connection = new SqlServerConnection(connectionString);
-            _configuration = new MappyConfiguration(connectionString, Assembly.GetCallingAssembly(), GetType());
+
+            if (_configuration == null)
+            {
+                _configuration = new MappyConfiguration(connectionString, Assembly.GetCallingAssembly(), GetType());
+            }
+
             _configurators = new List<IConfigurator>();
 
             LazyLoading = true;
@@ -29,6 +36,11 @@ namespace Mappy
         public IEnumerable<TEntity> Repository<TEntity>() where TEntity : new()
         {
             return Repository<TEntity>(null);
+        }
+
+        public List<TEntity> RepositoryAsList<TEntity>() where TEntity : new()
+        {
+            return Repository<TEntity>(null).ToList();
         }
 
         public IEnumerable<TEntity> Repository<TEntity>(SqlQuery<TEntity> query) where TEntity : new()

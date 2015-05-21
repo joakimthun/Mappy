@@ -20,6 +20,8 @@ namespace Mappy.LazyLoading
         private ModuleBuilder _moduleBuilder;
         private Random _random;
 
+        private bool _saved = false;
+
         public ProxyFactory(MappyConfiguration configuration)
         {
             _configuration = configuration;
@@ -33,7 +35,7 @@ namespace Mappy.LazyLoading
                 if (_assemblyBuilder == null)
                 {
                     var assemblyName = new AssemblyName(DynamicAssemblyName);
-                    _assemblyBuilder = AppDomain.CurrentDomain.DefineDynamicAssembly(assemblyName, AssemblyBuilderAccess.Run);
+                    _assemblyBuilder = AppDomain.CurrentDomain.DefineDynamicAssembly(assemblyName, AssemblyBuilderAccess.RunAndSave);
                 }
 
                 return _assemblyBuilder;
@@ -46,7 +48,11 @@ namespace Mappy.LazyLoading
             {
                 if (_moduleBuilder == null)
                 {
+                    #if DEBUG
+                    _moduleBuilder = AssemblyBuilder.DefineDynamicModule(DynamicModuleName, "mod_test.dll");
+                    #else
                     _moduleBuilder = AssemblyBuilder.DefineDynamicModule(DynamicModuleName);
+                    #endif
                 }
 
                 return _moduleBuilder;
@@ -69,7 +75,17 @@ namespace Mappy.LazyLoading
         public Type CreateProxy(Type baseType)
         {
             var publicVirtualInstanceProperties = baseType.GetPublicVirtualInstanceProperties();
-            return CreateSubType(baseType);
+            var subType = CreateSubType(baseType);
+
+            #if DEBUG
+            if (!_saved && _typeCache.Keys.Count == 3)
+            {
+                AssemblyBuilder.Save("mappy_test.dll");
+                _saved = true;
+            }
+            #endif
+
+            return subType;
         }
 
         private Type CreateSubType(Type baseType)
@@ -94,17 +110,15 @@ namespace Mappy.LazyLoading
         {
             var property = DefineProperty(typeBuilder, propertyInfo);
             var field = DefineField(typeBuilder, propertyInfo);
+
             var getter = DefineGetter(typeBuilder, propertyInfo, field);
-
-            //var test = DefineGetterTest(typeBuilder, propertyInfo, field);
-
             var setter = DefineSetter(typeBuilder, propertyInfo, field);
 
             property.SetGetMethod(getter);
             property.SetSetMethod(setter);
         }
 
-        private MethodBuilder DefineGetterTest(TypeBuilder typeBuilder, PropertyInfo propertyInfo, FieldBuilder field)
+        private MethodBuilder DefineGetter(TypeBuilder typeBuilder, PropertyInfo propertyInfo, FieldBuilder field)
         {
             var getter = typeBuilder.DefineMethod(string.Format("get_{0}", propertyInfo.Name), MethodAttributes.Virtual | MethodAttributes.Public | MethodAttributes.SpecialName | MethodAttributes.HideBySig, propertyInfo.PropertyType, Type.EmptyTypes);
             var ilGenerator = getter.GetILGenerator();
@@ -120,65 +134,31 @@ namespace Mappy.LazyLoading
                 propertyType = propertyInfo.PropertyType;
             }
 
+            var retLabel = ilGenerator.DefineLabel();
+
+            //ilGenerator.Emit(OpCodes.Ldarg_0);
+            //ilGenerator.Emit(OpCodes.Ldfld, field);
+
+            //ilGenerator.Emit(OpCodes.Brtrue, retLabel);
+
             var propertyTypeLocal = ilGenerator.DeclareLocal(propertyType);
             var propertyTypeConstructorInfo = propertyType.GetConstructor(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance, null, new Type[0], null);
 
             ilGenerator.Emit(OpCodes.Newobj, propertyTypeConstructorInfo);
             ilGenerator.Emit(OpCodes.Stloc, propertyTypeLocal);
 
-            var contextLocal = ilGenerator.DeclareLocal(_configuration.ContextType);
             var contextConstructorInfo = _configuration.ContextType.GetConstructor(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance, null, new Type[0], null);
 
             ilGenerator.Emit(OpCodes.Newobj, contextConstructorInfo);
-            ilGenerator.Emit(OpCodes.Stloc, contextLocal);
 
             var entityType = GetEntityType(propertyInfo);
-            var repositoryMethodInfo = _configuration.ContextType.GetMethod("Repository", new Type[0]).MakeGenericMethod(entityType);
+            var repositoryMethodInfo = _configuration.ContextType.GetMethod("RepositoryAsList", new Type[0]).MakeGenericMethod(entityType);
 
-            ilGenerator.Emit(OpCodes.Ldloc, contextLocal);
-            //ilGenerator.Emit(OpCodes.Ldnull, );
-            ilGenerator.Emit(OpCodes.Call, repositoryMethodInfo);
+            ilGenerator.Emit(OpCodes.Callvirt, repositoryMethodInfo);
 
-            ilGenerator.Emit(OpCodes.Ldloc, propertyTypeLocal);
+            ilGenerator.MarkLabel(retLabel);
 
             ilGenerator.Emit(OpCodes.Ret);
-
-            //.method private hidebysig static class [mscorlib] System.Collections.Generic.ICollection`1<class Application.Post> Test(string[] args) cil managed
-            //{
-            //// Code size       33 (0x21)
-            //.maxstack  2
-            //.locals init ([0] class Application.BlogContext context,
-            //         [1] class [mscorlib]
-            //      System.Collections.Generic.ICollection`1<class Application.Post> V_1)
-            //IL_0000:  newobj instance void Application.BlogContext::.ctor()
-            //IL_0005:  stloc.0
-            //.try
-            //{
-            //  IL_0006:  ldloc.0
-            //  IL_0007:  ldnull
-            //  IL_0008:  callvirt instance class [mscorlib]
-            //      System.Collections.Generic.IEnumerable`1<!!0> [Mappy]
-            //      Mappy.DbContext::Repository<class Application.Post>(class [Mappy]
-            //      Mappy.Queries.SqlQuery`1<!!0>)
-            //  IL_000d:  call class [mscorlib]
-            //      System.Collections.Generic.List`1<!!0> [System.Core]
-            //      System.Linq.Enumerable::ToList<class Application.Post>(class [mscorlib]
-            //      System.Collections.Generic.IEnumerable`1<!!0>)
-            //  IL_0012:  stloc.1
-            //  IL_0013:  leave.s IL_001f
-            //}  // end .try
-            //finally
-            //{
-            //IL_0015:  ldloc.0
-            //IL_0016:  brfalse.s IL_001e
-            //IL_0018:  ldloc.0
-            //IL_0019:  callvirt instance void[mscorlib]
-            //System.IDisposable::Dispose()
-            //IL_001e:  endfinally
-            //}  // end handler
-            //IL_001f:  ldloc.1
-            //IL_0020:  ret
-            //} // end of method 
 
             return getter;
         }
@@ -191,7 +171,7 @@ namespace Mappy.LazyLoading
             return propertyInfo.PropertyType;
         }
 
-        private MethodBuilder DefineGetter(TypeBuilder typeBuilder, PropertyInfo propertyInfo, FieldBuilder field)
+        private MethodBuilder DefineGetterDep(TypeBuilder typeBuilder, PropertyInfo propertyInfo, FieldBuilder field)
         {
             var getter = typeBuilder.DefineMethod(string.Format("get_{0}", propertyInfo.Name), MethodAttributes.Virtual | MethodAttributes.Public | MethodAttributes.SpecialName | MethodAttributes.HideBySig, propertyInfo.PropertyType, Type.EmptyTypes);
             var ilGenerator = getter.GetILGenerator();
