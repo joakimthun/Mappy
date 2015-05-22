@@ -123,40 +123,26 @@ namespace Mappy.LazyLoading
             var getter = typeBuilder.DefineMethod(string.Format("get_{0}", propertyInfo.Name), MethodAttributes.Virtual | MethodAttributes.Public | MethodAttributes.SpecialName | MethodAttributes.HideBySig, propertyInfo.PropertyType, Type.EmptyTypes);
             var ilGenerator = getter.GetILGenerator();
 
-            Type propertyType;
-
-            if (propertyInfo.IsICollection())
-            {
-                propertyType = typeof(List<>).MakeGenericType(propertyInfo.GetUnderlyingPropertyType());
-            }
-            else
-            {
-                propertyType = propertyInfo.PropertyType;
-            }
-
-            var retLabel = ilGenerator.DefineLabel();
-
-            //ilGenerator.Emit(OpCodes.Ldarg_0);
-            //ilGenerator.Emit(OpCodes.Ldfld, field);
-
-            //ilGenerator.Emit(OpCodes.Brtrue, retLabel);
-
-            var propertyTypeLocal = ilGenerator.DeclareLocal(propertyType);
-            var propertyTypeConstructorInfo = propertyType.GetConstructor(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance, null, new Type[0], null);
-
-            ilGenerator.Emit(OpCodes.Newobj, propertyTypeConstructorInfo);
-            ilGenerator.Emit(OpCodes.Stloc, propertyTypeLocal);
+            //var retLabel = ilGenerator.DefineLabel();
 
             var contextConstructorInfo = _configuration.ContextType.GetConstructor(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance, null, new Type[0], null);
-
-            ilGenerator.Emit(OpCodes.Newobj, contextConstructorInfo);
 
             var entityType = GetEntityType(propertyInfo);
             var repositoryMethodInfo = _configuration.ContextType.GetMethod("RepositoryAsList", new Type[0]).MakeGenericMethod(entityType);
 
+            // Push the object(this) onto the stack
+            ilGenerator.Emit(OpCodes.Ldarg_0);
+            // Create a context instance
+            ilGenerator.Emit(OpCodes.Newobj, contextConstructorInfo);
+            // Call the repository method on the context instance
             ilGenerator.Emit(OpCodes.Callvirt, repositoryMethodInfo);
+            // Store the value returned in our field
+            ilGenerator.Emit(OpCodes.Stfld, field);
 
-            ilGenerator.MarkLabel(retLabel);
+            // Push the object(this) onto the stack
+            ilGenerator.Emit(OpCodes.Ldarg_0);
+            // Push the field balue onto the stack
+            ilGenerator.Emit(OpCodes.Ldfld, field);
 
             ilGenerator.Emit(OpCodes.Ret);
 
@@ -214,7 +200,7 @@ namespace Mappy.LazyLoading
 
         private FieldBuilder DefineField(TypeBuilder typeBuilder, PropertyInfo propertyInfo)
         {
-            return typeBuilder.DefineField(string.Format("_{0}", propertyInfo.Name), propertyInfo.DeclaringType, FieldAttributes.Private);
+            return typeBuilder.DefineField(string.Format("_{0}", propertyInfo.Name), propertyInfo.PropertyType, FieldAttributes.Private);
         }
 
         private PropertyBuilder DefineProperty(TypeBuilder typeBuilder, PropertyInfo propertyInfo)
