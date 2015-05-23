@@ -123,12 +123,20 @@ namespace Mappy.LazyLoading
             var getter = typeBuilder.DefineMethod(string.Format("get_{0}", propertyInfo.Name), MethodAttributes.Virtual | MethodAttributes.Public | MethodAttributes.SpecialName | MethodAttributes.HideBySig, propertyInfo.PropertyType, Type.EmptyTypes);
             var ilGenerator = getter.GetILGenerator();
 
-            //var retLabel = ilGenerator.DefineLabel();
-
             var contextConstructorInfo = _configuration.ContextType.GetConstructor(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance, null, new Type[0], null);
 
             var entityType = GetEntityType(propertyInfo);
             var repositoryMethodInfo = _configuration.ContextType.GetMethod("RepositoryAsList", new Type[0]).MakeGenericMethod(entityType);
+
+            // Define our label we will jump to if the field already has a value
+            var returnLabel = ilGenerator.DefineLabel();
+
+            // Push the object(this) onto the stack
+            ilGenerator.Emit(OpCodes.Ldarg_0);
+            // Push the field value onto the stack
+            ilGenerator.Emit(OpCodes.Ldfld, field);
+            // If the field has a value(not null) we will jump to our label and return without going to the database
+            ilGenerator.Emit(OpCodes.Brtrue, returnLabel);
 
             // Push the object(this) onto the stack
             ilGenerator.Emit(OpCodes.Ldarg_0);
@@ -139,11 +147,14 @@ namespace Mappy.LazyLoading
             // Store the value returned in our field
             ilGenerator.Emit(OpCodes.Stfld, field);
 
+            ilGenerator.MarkLabel(returnLabel);
+
             // Push the object(this) onto the stack
             ilGenerator.Emit(OpCodes.Ldarg_0);
-            // Push the field balue onto the stack
+            // Push the field value onto the stack
             ilGenerator.Emit(OpCodes.Ldfld, field);
 
+            // Return the value stored in our field
             ilGenerator.Emit(OpCodes.Ret);
 
             return getter;
