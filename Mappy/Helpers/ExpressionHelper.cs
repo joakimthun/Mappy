@@ -1,5 +1,4 @@
-﻿using Mappy.Extensions;
-using System;
+﻿using System;
 using System.Linq.Expressions;
 using System.Reflection;
 
@@ -26,6 +25,16 @@ namespace Mappy.Helpers
         {
             var propertyInfo = GetPropertyInfo(expression);
             return propertyInfo.Name;
+        }
+
+        public static string GetMethodName<TSource>(Expression<Func<TSource, object>> expression)
+        {
+            var methodCallExpression = expression.Body as MethodCallExpression;
+
+            if (methodCallExpression == null)
+                throw new ArgumentException(string.Format("Expression '{0}' refers to a property, not a method.", expression.ToString()));
+
+            return methodCallExpression.Method.Name;
         }
     }
 }

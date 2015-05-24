@@ -9,7 +9,7 @@ using System.Reflection;
 
 namespace Mappy
 {
-    public class DbContext : IDisposable
+    public abstract class DbContext : IDisposable
     {
         [ThreadStatic]
         private static MappyConfiguration _configuration;
@@ -38,8 +38,9 @@ namespace Mappy
             return Repository<TEntity>(null);
         }
 
-        public List<TEntity> RepositoryAsList<TEntity>() where TEntity : new()
+        public List<TEntity> RepositoryToList<TEntity>(SqlQuery<TEntity> query) where TEntity : new()
         {
+            //TODO: Pass the query
             return Repository<TEntity>(null).ToList();
         }
 

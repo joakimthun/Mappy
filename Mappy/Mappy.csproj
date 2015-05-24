@@ -55,6 +55,7 @@
     <Compile Include="IDatabaseConnection.cs" />
     <Compile Include="IMappyEntity.cs" />
     <Compile Include="LazyLoading\IMappyProxy.cs" />
+    <Compile Include="LazyLoading\QueryFactory.cs" />
     <Compile Include="LazyLoading\ProxyFactory.cs" />
     <Compile Include="Mapping\EntityCollection.cs" />
     <Compile Include="Mapping\EntityInfo.cs" />

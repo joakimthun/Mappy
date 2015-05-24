@@ -1,8 +1,11 @@
 ﻿using Mappy.Configuration;
 using Mappy.Extensions;
+using Mappy.Helpers;
+using Mappy.Schema;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Reflection.Emit;
 
@@ -14,6 +17,7 @@ namespace Mappy.LazyLoading
         private const string DynamicModuleName = "Proxies";
 
         private readonly MappyConfiguration _configuration;
+        private readonly QueryFactory _queryFactory;
         private readonly Dictionary<Type, Type> _typeCache;
 
         private AssemblyBuilder _assemblyBuilder;
@@ -25,6 +29,7 @@ namespace Mappy.LazyLoading
         public ProxyFactory(MappyConfiguration configuration)
         {
             _configuration = configuration;
+            _queryFactory = new QueryFactory();
             _typeCache = new Dictionary<Type, Type>();
         }
 
@@ -126,7 +131,13 @@ namespace Mappy.LazyLoading
             var contextConstructorInfo = _configuration.ContextType.GetConstructor(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance, null, new Type[0], null);
 
             var entityType = GetEntityType(propertyInfo);
-            var repositoryMethodInfo = _configuration.ContextType.GetMethod("RepositoryAsList", new Type[0]).MakeGenericMethod(entityType);
+
+            var contextMethodName = ExpressionHelper.GetMethodName<DbContext>(x => x.RepositoryToList<object>(null));
+            var repositoryMethodInfo = _configuration.ContextType.GetMethod(contextMethodName).MakeGenericMethod(entityType);
+
+            var queryFactoryConstructor = typeof(QueryFactory).GetConstructor(BindingFlags.Public | BindingFlags.Instance, null, new Type[0], null);
+            var createQueryMethodName = ExpressionHelper.GetMethodName<QueryFactory>(x => x.CreateQuery<object>(null, null, null));
+            var createQueryMethod = typeof(QueryFactory).GetMethod(createQueryMethodName, new Type[] { typeof(object), typeof(string), typeof(string) }).MakeGenericMethod(entityType);
 
             // Define our label we will jump to if the field already has a value
             var returnLabel = ilGenerator.DefineLabel();
@@ -142,11 +153,22 @@ namespace Mappy.LazyLoading
             ilGenerator.Emit(OpCodes.Ldarg_0);
             // Create a context instance
             ilGenerator.Emit(OpCodes.Newobj, contextConstructorInfo);
+            
+            // Create a query factory instance
+            ilGenerator.Emit(OpCodes.Newobj, queryFactoryConstructor);
+
+            // Push all the CreateQuery parameters onto the stack and call the CreateQuery method on our query factory instance
+            ilGenerator.Emit(OpCodes.Ldarg_0);
+            ilGenerator.Emit(OpCodes.Ldstr, _configuration.Schema.GetPrimaryKeyProperty(typeBuilder.BaseType).Name);
+            ilGenerator.Emit(OpCodes.Ldstr, _configuration.Schema.GetForeignKeyProperty(typeBuilder.BaseType, entityType).Name);
+            ilGenerator.Emit(OpCodes.Callvirt, createQueryMethod);
+
             // Call the repository method on the context instance
             ilGenerator.Emit(OpCodes.Callvirt, repositoryMethodInfo);
             // Store the value returned in our field
             ilGenerator.Emit(OpCodes.Stfld, field);
 
+            // Mark our label we will be jumping to if our field already has a value
             ilGenerator.MarkLabel(returnLabel);
 
             // Push the object(this) onto the stack
