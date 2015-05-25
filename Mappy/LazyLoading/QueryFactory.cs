@@ -1,5 +1,5 @@
-﻿using Mappy.Queries;
-using System.Reflection;
+﻿using Mappy.Helpers;
+using Mappy.Queries;
 
 namespace Mappy.LazyLoading
 {
@@ -8,8 +8,13 @@ namespace Mappy.LazyLoading
         public SqlQuery<TEntity> CreateQuery<TEntity>(object parentEntity, string primaryKeyProperty, string foreignKeyProperty) where TEntity : new()
         {
             var parentType = parentEntity.GetType();
+            var primaryKeyPropertyInfo = parentType.GetProperty(primaryKeyProperty);
+            var primaryKeyPropertyValue = primaryKeyPropertyInfo.GetValue(parentEntity);
 
-            return null;
+            var foreignKeyPropertyInfo = typeof(TEntity).GetProperty(foreignKeyProperty);
+
+            var predicate = ExpressionBuilder.MakeBinaryEqualsMemberExpression<TEntity>(primaryKeyPropertyValue, foreignKeyPropertyInfo);
+            return new SqlQuery<TEntity>().Where(predicate);
         }
     }
 }

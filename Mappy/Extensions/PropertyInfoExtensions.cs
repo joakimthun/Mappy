@@ -94,7 +94,7 @@ namespace Mappy.Extensions
             if (type == typeof(Guid))
                 return ((Guid)value1) == ((Guid)value2);
 
-            throw new MappyException("Unsupported type '{0}'", type.FullName);
+            throw new MappyException($"Unsupported type '{type.FullName}'");
         }
     }
 }

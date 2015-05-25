@@ -52,6 +52,7 @@
     <Compile Include="Extensions\IEnumerableExtensions.cs" />
     <Compile Include="Extensions\ObjectExtensions.cs" />
     <Compile Include="Extensions\PropertyInfoExtensions.cs" />
+    <Compile Include="Helpers\ExpressionBuilder.cs" />
     <Compile Include="IDatabaseConnection.cs" />
     <Compile Include="IMappyEntity.cs" />
     <Compile Include="LazyLoading\IMappyProxy.cs" />
@@ -60,6 +61,12 @@
     <Compile Include="Mapping\EntityCollection.cs" />
     <Compile Include="Mapping\EntityInfo.cs" />
     <Compile Include="Mapping\Property.cs" />
+    <Compile Include="Queries\Parsing\ConstantExpressionParselet.cs" />
+    <Compile Include="Queries\Parsing\MemberExpressionParselet.cs" />
+    <Compile Include="Queries\Parsing\BinaryExpressionParselet.cs" />
+    <Compile Include="Queries\Parsing\ExpressionParselet.cs" />
+    <Compile Include="Queries\WhereSegment.cs" />
+    <Compile Include="Queries\Parsing\ExpressionParser.cs" />
     <Compile Include="Queries\SelectSegment.cs" />
     <Compile Include="Queries\FromSegment.cs" />
     <Compile Include="Queries\Include.cs" />

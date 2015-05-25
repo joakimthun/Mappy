@@ -40,8 +40,7 @@ namespace Mappy
 
         public List<TEntity> RepositoryToList<TEntity>(SqlQuery<TEntity> query) where TEntity : new()
         {
-            //TODO: Pass the query
-            return Repository<TEntity>(null).ToList();
+            return Repository<TEntity>(query).ToList();
         }
 
         public IEnumerable<TEntity> Repository<TEntity>(SqlQuery<TEntity> query) where TEntity : new()

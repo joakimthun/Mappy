@@ -14,10 +14,10 @@ namespace Application
             using (var context = new BlogContext())
             {
                 var query = new SqlQuery<Post>()
-                    //.Include(x => x.Comments)
-                    .Include(x => x.User);
+                    .Include(x => x.User)
+                    .Where(x => x.Id == 1 || x.Id == 2 || x.Id == 3 || x.Id == 4);
 
-                var result = context.Repository<Post>(query);
+                var result = context.Repository(query);
             
                 foreach (var post in result)
                 {

@@ -22,22 +22,14 @@ namespace Mappy.Queries
 
         private void AddFromStatement(StringBuilder sb)
         {
-            sb.Append(string.Format(" FROM [{0}] AS {1}", _table.Name, _helper.GetTableAlias(typeof(TEntity))));
+            sb.Append($" FROM [{_table.Name}] AS {_helper.GetTableAlias(typeof(TEntity))}");
         }
 
         private void AddJoinStatement(StringBuilder sb)
         {
             foreach (var include in _includes)
             {
-                sb.Append(
-                    string.Format(
-                    " {0} [{1}] AS {2} ON {3} = {4}",
-                    GetJoinType(include),
-                    include.UnderlyingPropertyType.Name,
-                    _helper.GetTableAlias(include.UnderlyingPropertyType),
-                    GetFkColumn(include),
-                    GetPkColumn(include)
-                    ));
+                sb.Append($" {GetJoinType(include)} [{include.UnderlyingPropertyType.Name}] AS {_helper.GetTableAlias(include.UnderlyingPropertyType)} ON {GetFkColumn(include)} = {GetPkColumn(include)}");
             }
         }
 
@@ -55,11 +47,11 @@ namespace Mappy.Queries
 
             if (foreignKey.PkTable.Name == typeof(TEntity).Name)
             {
-                return string.Format("{0}.{1}", _helper.GetTableAlias(include.UnderlyingPropertyType), foreignKey.FkColumn.Name);
+                return $"{_helper.GetTableAlias(include.UnderlyingPropertyType)}.{foreignKey.FkColumn.Name}";
             }
             else
             {
-                return string.Format("{0}.{1}", _helper.GetTableAlias(include.UnderlyingPropertyType), foreignKey.PkColumn.Name);
+                return $"{_helper.GetTableAlias(include.UnderlyingPropertyType)}.{foreignKey.PkColumn.Name}";
             }
         }
 
@@ -70,11 +62,11 @@ namespace Mappy.Queries
 
             if (foreignKey.PkTable.Name == typeof(TEntity).Name)
             {
-                return string.Format("{0}.{1}", _helper.GetTableAlias(typeof(TEntity)), primaryKey.Column.Name);
+                return $"{_helper.GetTableAlias(typeof(TEntity))}.{primaryKey.Column.Name}";
             }
             else
             {
-                return string.Format("{0}.{1}", _helper.GetTableAlias(typeof(TEntity)), foreignKey.FkColumn.Name);
+                return $"{_helper.GetTableAlias(typeof(TEntity))}.{foreignKey.FkColumn.Name}";
             }
         }
 

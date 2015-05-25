@@ -4,7 +4,7 @@ namespace Mappy.Exceptions
 {
     internal class MappyException : Exception
     {
-        public MappyException(string format, params object[] args) : base(string.Format(format, args))
+        public MappyException(string message) : base(message)
         {   
         }
     }

@@ -33,7 +33,7 @@ namespace Mappy.Configuration
             }
             catch (ArgumentException)
             {
-                throw new MappyException("An invalid has foreign key was added for the entity '{0}'", typeof(TEntity).Name);
+                throw new MappyException($"An invalid has foreign key was added for the entity '{typeof(TEntity).Name}'");
             }
         }
     }

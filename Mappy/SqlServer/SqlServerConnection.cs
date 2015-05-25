@@ -54,7 +54,7 @@ namespace Mappy.SqlServer
         {
             var cs = ConfigurationManager.ConnectionStrings[connectionString];
             if (cs == null)
-                throw new MappyException("Can not find the connection string '{0}'. \r\n Did you add it to the .config file?", connectionString);
+                throw new MappyException($"Can not find the connection string '{connectionString}'. \r\n Did you add it to the .config file?");
 
             return cs.ConnectionString;
         }

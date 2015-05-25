@@ -13,14 +13,17 @@ namespace Mappy.Queries
 {
     public class SqlQuery<TEntity> where TEntity : new()
     {
+        private readonly List<Include> _includes;
+        private readonly List<Expression<Func<TEntity, bool>>> _predicates;
+        private readonly QueryHelper _helper;
+
         private MappyConfiguration _configuration;
-        private List<Include> _includes;
         private Table _table;
-        private QueryHelper _helper;
 
         public SqlQuery()
         {
             _includes = new List<Include>();
+            _predicates = new List<Expression<Func<TEntity, bool>>>();
             _helper = new QueryHelper();
         }
 
@@ -38,6 +41,16 @@ namespace Mappy.Queries
             return this;
         }
 
+        public SqlQuery<TEntity> Where(Expression<Func<TEntity, bool>> predicate)
+        {
+            if (_predicates.Any())
+                throw new MappyException("Right now only one predicate is supported");
+
+            _predicates.Add(predicate);
+
+            return this;
+        }
+
         internal string Compile()
         {
             _table = _configuration.Schema.Tables.Single(t => t.Name == typeof(TEntity).Name);
@@ -46,11 +59,13 @@ namespace Mappy.Queries
 
             var selectSegment = new SelectSegment<TEntity>(_configuration, _helper, _includes);
             var fromSegment = new FromSegment<TEntity>(_configuration, _helper, _includes);
+            var whereSegment = new WhereSegment<TEntity>(_configuration, _helper, _includes, _predicates);
 
             var sb = new StringBuilder();
 
             selectSegment.Compile(sb);
             fromSegment.Compile(sb);
+            whereSegment.Compile(sb);
 
             return sb.ToString();
         }
@@ -75,7 +90,7 @@ namespace Mappy.Queries
                     (fk.FkTable.Name == include.UnderlyingPropertyType.Name && fk.PkTable.Name == _table.Name) ||
                     (fk.PkTable.Name == include.UnderlyingPropertyType.Name && fk.FkTable.Name == _table.Name)))
                 {
-                    throw new MappyException("The included property {0} does not have a valid foreign key to the table {1}", include.PropertyName, _table.Name);
+                    throw new MappyException($"The included property {include.PropertyName} does not have a valid foreign key to the table {_table.Name}");
                 }
             }
         }

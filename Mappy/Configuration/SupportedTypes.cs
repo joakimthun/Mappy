@@ -21,7 +21,7 @@ namespace Mappy.Configuration
             var supportedType = Types().SingleOrDefault(x => x.SqlType == sqlType && x.Nullable == nullable);
 
             if (supportedType == null)
-                throw new MappyException("Unsupported type '{0}'.", sqlType);
+                throw new MappyException($"Unsupported type '{sqlType}'.");
 
             return supportedType.Type;
         }
@@ -31,7 +31,7 @@ namespace Mappy.Configuration
             var supportedType = Types().SingleOrDefault(x => x.Type == type);
 
             if(supportedType == null)
-                throw new MappyException("Unsupported type '{0}'.", type.FullName);
+                throw new MappyException($"Unsupported type '{type.FullName}'.");
 
             return supportedType.SqlType;
         }

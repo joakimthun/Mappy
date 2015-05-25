@@ -125,7 +125,7 @@ namespace Mappy.LazyLoading
 
         private MethodBuilder DefineGetter(TypeBuilder typeBuilder, PropertyInfo propertyInfo, FieldBuilder field)
         {
-            var getter = typeBuilder.DefineMethod(string.Format("get_{0}", propertyInfo.Name), MethodAttributes.Virtual | MethodAttributes.Public | MethodAttributes.SpecialName | MethodAttributes.HideBySig, propertyInfo.PropertyType, Type.EmptyTypes);
+            var getter = typeBuilder.DefineMethod($"get_{propertyInfo.Name}", MethodAttributes.Virtual | MethodAttributes.Public | MethodAttributes.SpecialName | MethodAttributes.HideBySig, propertyInfo.PropertyType, Type.EmptyTypes);
             var ilGenerator = getter.GetILGenerator();
 
             var contextConstructorInfo = _configuration.ContextType.GetConstructor(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance, null, new Type[0], null);
@@ -192,11 +192,11 @@ namespace Mappy.LazyLoading
 
         private MethodBuilder DefineGetterDep(TypeBuilder typeBuilder, PropertyInfo propertyInfo, FieldBuilder field)
         {
-            var getter = typeBuilder.DefineMethod(string.Format("get_{0}", propertyInfo.Name), MethodAttributes.Virtual | MethodAttributes.Public | MethodAttributes.SpecialName | MethodAttributes.HideBySig, propertyInfo.PropertyType, Type.EmptyTypes);
+            var getter = typeBuilder.DefineMethod($"get_{propertyInfo.Name}", MethodAttributes.Virtual | MethodAttributes.Public | MethodAttributes.SpecialName | MethodAttributes.HideBySig, propertyInfo.PropertyType, Type.EmptyTypes);
             var ilGenerator = getter.GetILGenerator();
 
             // Added for debugging purposes
-            ilGenerator.Emit(OpCodes.Ldstr, string.Format("Getter invoked on '{0}.{1}'", propertyInfo.DeclaringType.Name, propertyInfo.Name));
+            ilGenerator.Emit(OpCodes.Ldstr, $"Getter invoked on '{propertyInfo.DeclaringType.Name}.{propertyInfo.Name}'");
             ilGenerator.Emit(OpCodes.Call, typeof(System.Console).GetMethod("WriteLine", new Type[] { typeof(string) }));
 
             // Push the object(this) onto the stack
@@ -213,7 +213,7 @@ namespace Mappy.LazyLoading
 
         private MethodBuilder DefineSetter(TypeBuilder typeBuilder, PropertyInfo propertyInfo, FieldBuilder field)
         {
-            var setter = typeBuilder.DefineMethod(string.Format("set_{0}", propertyInfo.Name), MethodAttributes.Virtual | MethodAttributes.Public | MethodAttributes.SpecialName | MethodAttributes.HideBySig, null, new Type[] { propertyInfo.PropertyType });
+            var setter = typeBuilder.DefineMethod($"set_{propertyInfo.Name}", MethodAttributes.Virtual | MethodAttributes.Public | MethodAttributes.SpecialName | MethodAttributes.HideBySig, null, new Type[] { propertyInfo.PropertyType });
             var ilGenerator = setter.GetILGenerator();
 
             // Push the object(this) onto the stack
@@ -233,7 +233,7 @@ namespace Mappy.LazyLoading
 
         private FieldBuilder DefineField(TypeBuilder typeBuilder, PropertyInfo propertyInfo)
         {
-            return typeBuilder.DefineField(string.Format("_{0}", propertyInfo.Name), propertyInfo.PropertyType, FieldAttributes.Private);
+            return typeBuilder.DefineField($"_{propertyInfo.Name}", propertyInfo.PropertyType, FieldAttributes.Private);
         }
 
         private PropertyBuilder DefineProperty(TypeBuilder typeBuilder, PropertyInfo propertyInfo)
@@ -243,7 +243,7 @@ namespace Mappy.LazyLoading
 
         private string GetProxyName(Type baseType)
         {
-            return string.Format("{0}_Proxy_{1}", baseType.Name, Random.Next(0, int.MaxValue));
+            return $"{baseType.Name}_Proxy_{Random.Next(0, int.MaxValue)}";
         }
     }
 }

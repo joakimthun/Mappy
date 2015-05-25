@@ -12,11 +12,11 @@ namespace Mappy.Helpers
 
             var member = expression.Body as MemberExpression;
             if (member == null)
-                throw new ArgumentException(string.Format("Expression '{0}' refers to a method, not a property.", expression.ToString()));
+                throw new ArgumentException($"Expression '{expression.ToString()}' refers to a method, not a property.");
 
             var propertyInfo = member.Member as PropertyInfo;
             if (propertyInfo == null)
-                throw new ArgumentException(string.Format("Expression '{0}' refers to a field, not a property.", expression.ToString()));
+                throw new ArgumentException($"Expression '{expression.ToString()}' refers to a field, not a property.");
 
             return propertyInfo;
         }
@@ -32,7 +32,7 @@ namespace Mappy.Helpers
             var methodCallExpression = expression.Body as MethodCallExpression;
 
             if (methodCallExpression == null)
-                throw new ArgumentException(string.Format("Expression '{0}' refers to a property, not a method.", expression.ToString()));
+                throw new ArgumentException($"Expression '{expression.ToString()}' refers to a property, not a method.");
 
             return methodCallExpression.Method.Name;
         }

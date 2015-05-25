@@ -46,7 +46,7 @@ namespace Mappy.Mapping
             if(_entities.ContainsKey(entityType))
                 return _entities[entityType];
 
-            return null;
+            return new List<object>();
         }
     }
 }

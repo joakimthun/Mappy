@@ -32,7 +32,7 @@ namespace Mappy.Mapping
         {
             var type = typeof(TEntity);
             if (!ContainsTable(type))
-                throw new MappyException("The entity type '{0}' has no matching table in the database.", type.Name);
+                throw new MappyException($"The entity type '{type.Name}' has no matching table in the database.");
 
             return MapImpl<TEntity>(reader);
         }
@@ -210,7 +210,7 @@ namespace Mappy.Mapping
 
         private object GetChildEntity(object parent, ForeignKey foreignKey, IEnumerable<object> children)
         {
-            if (children == null)
+            if (children == null || !children.Any())
                 return null;
 
             var parentKeyProperty = foreignKey.PkTable.EntityType.GetProperty(foreignKey.PkColumn.Name);
@@ -221,7 +221,8 @@ namespace Mappy.Mapping
             if (matchingChildren.Count() != 1)
             {
                 var childType = foreignKey.PkTable.EntityType == parent.GetType() ? foreignKey.FkTable.EntityType : foreignKey.PkTable.EntityType;
-                throw new MappyException("Expected one '{0}' to match the '{1}' found '{2}' matching entities", childType.FullName, parent.GetType().FullName, matchingChildren.Count());
+
+                throw new MappyException($"Expected one '{childType.FullName}' to match the '{parent.GetType().FullName}' found '{matchingChildren.Count()}' matching entities");
             }
             
             return matchingChildren.Single();
