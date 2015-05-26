@@ -15,7 +15,7 @@ namespace Application
             {
                 var query = new SqlQuery<Post>()
                     .Include(x => x.User)
-                    .Where(x => x.Id == 1 || x.Id == 2 || x.Id == 3 || x.Id == 4);
+                    .Where(x => x.Text != null && x.Id == 1 || x.Id == 2 || x.Id == 3 || x.Id == 4);
 
                 var result = context.Repository(query);
             

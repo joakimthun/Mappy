@@ -1,6 +1,7 @@
 ﻿using Mappy.Exceptions;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 
@@ -38,14 +39,14 @@ namespace Mappy.Queries.Parsing
         private ExpressionParselet GetParselet(Expression expression)
         {
             var expressionType = expression.GetType();
+            var e = expressionType.IsAssignableFrom(expressionType);
 
-            if (_parselets.ContainsKey(expressionType))
-                return _parselets[expressionType];
+            var parselet = _parselets.SingleOrDefault(x => x.Key.IsAssignableFrom(expressionType));
 
-            if (_parselets.ContainsKey(expressionType.BaseType))
-                return _parselets[expressionType.BaseType];
+            if(parselet.Value == null)
+                throw new MappyException($"The expression type '{expressionType.FullName}' is not supported.");
 
-            throw new MappyException($"The expression type '{expressionType.FullName}' is not supported.");
+            return parselet.Value;
         }
 
         private void RegisterParselets()

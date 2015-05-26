@@ -10,7 +10,7 @@ namespace Mappy.Queries.Parsing
         public override void Parse(ExpressionParser parser, Expression expression, StringBuilder sb)
         {
             var constantExpression = expression as ConstantExpression;
-            sb.Append(constantExpression.Value);
+            sb.Append(constantExpression.Value ?? "NULL");
         }
     }
 }
